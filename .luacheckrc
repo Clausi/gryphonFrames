@@ -31,7 +31,9 @@ read_globals = {
 
     -- API
     "C_AddOns",
+    "C_DurationUtil",
     "C_NamePlate",
+    "C_StringUtil",
     "C_Texture",
     "C_Timer",
     "C_UnitAuras",

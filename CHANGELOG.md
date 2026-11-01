@@ -29,7 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`/gryphonframes buffs on|off`, per character, off by default). Below the power bar of the
   player frame, or anywhere in Edit Mode, with icon size, icons per row, alignment (left to right,
   centered or right to left) and sort order (default, remaining time, full duration, name or
-  whitelist order, optionally reversed) per layout.
+  whitelist order, optionally reversed) per layout. On WoW Forever, stacks and remaining time are
+  also shown while the game hides aura details from addons (combat restrictions); "Only Whitelist
+  Buffs" then shows all own buffs, since the whitelist cannot be matched.
 - Own buffs: a maximum duration hides long buffs, an option hides buffs without a duration
   (forms, auras, aspects), a whitelist always shows buffs and a blacklist hides them, by spell ID
   or aura name, and an option shows only the whitelist (per character, in the options).
