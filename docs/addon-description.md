@@ -14,6 +14,7 @@ GryphonFrames improves Blizzard's own frames instead of replacing them. Everythi
 ### Combo points on the nameplate
 - Rogues and cat druids also see their combo points on the target's nameplate
 - The combo points at the target frame stay where they are
+- Modern style like the modern unit frames, or classic style
 - Above the name or below the nameplate, with adjustable size, gap and left/right position
 - Turn it on in the addon options or with `/gryphonframes combo on`, per character
 

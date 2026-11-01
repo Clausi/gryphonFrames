@@ -30,6 +30,7 @@ ns.charDefaults = {
     nameplateComboPointsGap = 2,
     -- Horizontal position in percent of the free space: -100 left, 0 centered, 100 right.
     nameplateComboPointsOffsetX = 0,
+    -- nameplateComboPointsStyle ("modern" or "classic") depends on the client, see Core/Compat.lua.
 }
 
 -- Registers a module. A module may implement:

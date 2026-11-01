@@ -33,33 +33,228 @@ NameplateComboPoints.MIN_GAP, NameplateComboPoints.MAX_GAP = 0, 40
 -- flush left, 0 centered, 100 flush right.
 NameplateComboPoints.MIN_OFFSET_X, NameplateComboPoints.MAX_OFFSET_X = -100, 100
 
-local row
-local points = {}
+-- Look of the points: "modern" like the combo points of the modern unit frames, "classic" like
+-- the Classic ComboFrame.
+NameplateComboPoints.STYLES = { "modern", "classic" }
 
-local function GetPoint(index)
-    local point = points[index]
-    if not point then
-        point = CreateFrame("Frame", nil, row)
-        point:SetSize(POINT_SIZE, POINT_SIZE)
-        ns.Compat.SetupComboPoint(point)
-        points[index] = point
+local COMBO_POINT_TEXTURE = "Interface\\ComboFrame\\ComboPoint"
+local CIRCLE_MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
+
+local row
+-- Points per style, created on first use. A style change hides the points of the other style.
+local pointsByStyle = {}
+
+-- Each style fills a point (POINT_SIZE x POINT_SIZE) with its empty socket and adds:
+--   point.Active  -- frame with the filled point, faded and scaled by the transitions
+--   point.Glow    -- texture that flashes when the point fills
+
+-- Like ComboPointTemplate (Blizzard_UnitFrame/Classic/ComboFrame.xml): socket, gem (Highlight)
+-- and the Shine that ComboFrame_Update() flashes on a new point.
+local function SetupClassic(point)
+    local socket = point:CreateTexture(nil, "BACKGROUND")
+    socket:SetTexture(COMBO_POINT_TEXTURE)
+    socket:SetSize(12, 16)
+    socket:SetPoint("TOPLEFT")
+    socket:SetTexCoord(0, 0.375, 0, 1)
+
+    local gem = point.Active:CreateTexture(nil, "ARTWORK")
+    gem:SetTexture(COMBO_POINT_TEXTURE)
+    gem:SetSize(8, 16)
+    gem:SetPoint("TOPLEFT", 2, 0)
+    gem:SetTexCoord(0.375, 0.5625, 0, 1)
+
+    point.Glow = point:CreateTexture(nil, "OVERLAY")
+    point.Glow:SetTexture(COMBO_POINT_TEXTURE)
+    point.Glow:SetSize(14, 16)
+    point.Glow:SetPoint("TOPLEFT", 0, 4)
+    point.Glow:SetTexCoord(0.5625, 1, 0, 1)
+    point.Glow:SetBlendMode("ADD")
+end
+
+-- Blizzard's modern combo point (RogueComboPointTemplate, Blizzard_UnitFrame/Mainline/
+-- RogueComboPoint.xml): BGInactive, BGActive with IconUncharged on top, and BGGlow.
+local function SetupModernAtlas(point)
+    local socket = point:CreateTexture(nil, "BACKGROUND")
+    socket:SetAtlas("uf-roguecp-bg-dis")
+    socket:SetAllPoints()
+
+    local background = point.Active:CreateTexture(nil, "BORDER")
+    background:SetAtlas("uf-roguecp-bg")
+    background:SetAllPoints()
+    local gem = point.Active:CreateTexture(nil, "ARTWORK")
+    gem:SetAtlas("uf-roguecp-icon-red")
+    gem:SetAllPoints()
+
+    point.Glow = point:CreateTexture(nil, "OVERLAY")
+    point.Glow:SetAtlas("uf-roguecp-bg")
+    point.Glow:SetPoint("TOPLEFT", -2, 2)
+    point.Glow:SetPoint("BOTTOMRIGHT", 2, -2)
+    point.Glow:SetBlendMode("ADD")
+end
+
+-- A circle of a plain color, inset from the frame's edges (negative: larger than the frame).
+local function CreateCircle(frame, layer, subLevel, inset, r, g, b, a)
+    local circle = frame:CreateTexture(nil, layer, nil, subLevel)
+    circle:SetPoint("TOPLEFT", inset, -inset)
+    circle:SetPoint("BOTTOMRIGHT", -inset, inset)
+    circle:SetColorTexture(r, g, b, a)
+    local mask = frame:CreateMaskTexture()
+    mask:SetTexture(CIRCLE_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+    mask:SetAllPoints(circle)
+    circle:AddMaskTexture(mask)
+    return circle
+end
+
+-- The modern combo point drawn from plain shapes, for clients without Blizzard's modern art
+-- (Classic Era, Anniversary): a red gem with a light from above in a bronze setting.
+local function SetupModernDrawn(point)
+    CreateCircle(point, "BACKGROUND", 0, 0, 0.66, 0.53, 0.33, 1)
+    CreateCircle(point, "BACKGROUND", 1, 1, 0.22, 0.16, 0.1, 1)
+    CreateCircle(point, "BACKGROUND", 2, 1.75, 0.07, 0.05, 0.05, 1)
+
+    local gem = CreateCircle(point.Active, "ARTWORK", 0, 2, 1, 1, 1, 1)
+    gem:SetGradient("VERTICAL", CreateColor(0.5, 0, 0, 1), CreateColor(1, 0.32, 0.18, 1))
+    local shine = CreateCircle(point.Active, "ARTWORK", 1, 3.5, 1, 1, 1, 0.45)
+    shine:ClearAllPoints()
+    shine:SetPoint("TOPLEFT", 3.5, -3)
+    shine:SetSize(POINT_SIZE * 0.3, POINT_SIZE * 0.3)
+    shine:SetBlendMode("ADD")
+
+    point.Glow = CreateCircle(point, "OVERLAY", 0, -3, 1, 0.35, 0.15, 1)
+    point.Glow:SetBlendMode("ADD")
+end
+
+local function CreateAlpha(group, fromAlpha, toAlpha, duration, order)
+    local alpha = group:CreateAnimation("Alpha")
+    alpha:SetFromAlpha(fromAlpha)
+    alpha:SetToAlpha(toAlpha)
+    alpha:SetDuration(duration)
+    alpha:SetOrder(order or 1)
+    return alpha
+end
+
+-- Transitions like Blizzard's: a new point fades in, shrinks from a larger size and flashes, a
+-- spent point fades out.
+local function CreateTransitions(point)
+    point.fillIn = point.Active:CreateAnimationGroup()
+    point.fillIn:SetToFinalAlpha(true)
+    CreateAlpha(point.fillIn, 0, 1, 0.15)
+    local scale = point.fillIn:CreateAnimation("Scale")
+    scale:SetScaleFrom(1.6, 1.6)
+    scale:SetScaleTo(1, 1)
+    scale:SetDuration(0.2)
+    scale:SetOrigin("CENTER", 0, 0)
+
+    point.flash = point.Glow:CreateAnimationGroup()
+    point.flash:SetToFinalAlpha(true)
+    CreateAlpha(point.flash, 0, 0.9, 0.1, 1)
+    CreateAlpha(point.flash, 0.9, 0, 0.35, 2)
+
+    point.spend = point.Active:CreateAnimationGroup()
+    point.spend:SetToFinalAlpha(true)
+    CreateAlpha(point.spend, 1, 0, 0.2)
+end
+
+local function CreatePoint(style)
+    local point = CreateFrame("Frame", nil, row)
+    point:SetSize(POINT_SIZE, POINT_SIZE)
+    point.Active = CreateFrame("Frame", nil, point)
+    point.Active:SetAllPoints()
+    if style == "classic" then
+        SetupClassic(point)
+    elseif ns.Compat.HasModernComboPointArt() then
+        SetupModernAtlas(point)
+    else
+        SetupModernDrawn(point)
     end
+    point.Active:SetAlpha(0)
+    point.Glow:SetAlpha(0)
+    CreateTransitions(point)
+    point.isActive = false
     return point
 end
 
--- Shows maxPoints points in a centered row, the first comboPoints of them filled.
-local function UpdatePoints(comboPoints, maxPoints)
+local function GetPoints()
+    local style = ns.charDb.nameplateComboPointsStyle
+    if not pointsByStyle[style] then
+        pointsByStyle[style] = {}
+    end
+    return pointsByStyle[style]
+end
+
+local function SetActive(point, isActive, suppressTransition)
+    if point.isActive == isActive then
+        return
+    end
+    point.isActive = isActive
+    point.fillIn:Stop()
+    point.flash:Stop()
+    point.spend:Stop()
+    if suppressTransition then
+        point.Active:SetAlpha(isActive and 1 or 0)
+        point.Glow:SetAlpha(0)
+    elseif isActive then
+        point.fillIn:Play()
+        point.flash:Play()
+    else
+        point.spend:Play()
+    end
+end
+
+-- Style and number of points the row is laid out for. The layout only changes with them.
+local laidOutStyle, laidOutMaxPoints
+
+-- Lays out maxPoints points of the current style in a row and hides the rest.
+local function LayoutPoints(maxPoints)
+    local style = ns.charDb.nameplateComboPointsStyle
+    if style == laidOutStyle and maxPoints == laidOutMaxPoints then
+        return
+    end
+
+    local points = GetPoints()
+    if style ~= laidOutStyle then
+        for _, stylePoints in pairs(pointsByStyle) do
+            if stylePoints ~= points then
+                for _, point in ipairs(stylePoints) do
+                    point:Hide()
+                end
+            end
+        end
+    end
+    laidOutStyle, laidOutMaxPoints = style, maxPoints
+
     row:SetSize(maxPoints * POINT_SIZE + (maxPoints - 1) * SPACING, POINT_SIZE)
     for index = 1, math.max(maxPoints, #points) do
-        local point = GetPoint(index)
+        local point = points[index]
+        if not point then
+            point = CreatePoint(style)
+            points[index] = point
+        end
         if index <= maxPoints then
             point:ClearAllPoints()
             point:SetPoint("LEFT", row, "LEFT", (index - 1) * (POINT_SIZE + SPACING), 0)
-            point.Active:SetShown(index <= comboPoints)
             point:Show()
         else
+            SetActive(point, false, true)
             point:Hide()
         end
+    end
+end
+
+-- Fills the first comboPoints points. Without transitions after a target change, like
+-- Blizzard's ComboFrame. Only points whose state changes are touched.
+local function FillPoints(comboPoints, maxPoints, suppressTransitions)
+    local points = GetPoints()
+    for index = 1, maxPoints do
+        SetActive(points[index], index <= comboPoints, suppressTransitions)
+    end
+end
+
+-- Empties all points without transitions while the row is hidden, so the first point after it
+-- shows again fills with a transition.
+local function ResetPoints()
+    for _, point in ipairs(GetPoints()) do
+        SetActive(point, false, true)
     end
 end
 
@@ -132,8 +327,10 @@ end
 -- and visibility like Blizzard's own nameplate class bars.
 local function AttachTo(namePlate, layout)
     local healthBar = GetHealthBar(namePlate)
-    row:SetParent(namePlate)
-    row:SetFrameLevel(namePlate:GetFrameLevel() + 10)
+    if row:GetParent() ~= namePlate then
+        row:SetParent(namePlate)
+        row:SetFrameLevel(namePlate:GetFrameLevel() + 10)
+    end
     row:SetScale(ns.charDb.nameplateComboPointsScale)
     row:ClearAllPoints()
     if not healthBar then
@@ -174,6 +371,9 @@ local shown = {}
 
 local Update
 
+-- Set by a target change or a new setting: the next update shows the points without transitions.
+local suppressTransitions = false
+
 -- Below the nameplate, the row moves under the cast bar while it is shown. Blizzard reuses
 -- nameplate frames, so each cast bar is hooked once; the hooks only run Update().
 local hookedCastBars = {}
@@ -200,8 +400,10 @@ function Update()
     local namePlate = ns.charDb.nameplateComboPoints and C_NamePlate.GetNamePlateForUnit("target")
     local comboPoints = namePlate and GetComboPoints("player", "target") or 0
     if ns.Compat.IsSecret(comboPoints) or comboPoints == 0 then
+        suppressTransitions = false
         if shown.namePlate then
             wipe(shown)
+            ResetPoints()
             row:Hide()
         end
         return
@@ -218,16 +420,23 @@ function Update()
     else
         nameHeight = GetNameHeightAbove(namePlate)
     end
-    if namePlate == shown.namePlate and comboPoints == shown.comboPoints and maxPoints == shown.maxPoints
+    local placed = namePlate == shown.namePlate and maxPoints == shown.maxPoints
         and healthBarWidth == shown.healthBarWidth and castBarShown == shown.castBarShown
-        and nameHeight == shown.nameHeight then
+        and nameHeight == shown.nameHeight
+    if placed and comboPoints == shown.comboPoints then
+        suppressTransitions = false
         return
     end
     shown.namePlate, shown.comboPoints, shown.maxPoints = namePlate, comboPoints, maxPoints
     shown.healthBarWidth, shown.castBarShown, shown.nameHeight = healthBarWidth, castBarShown, nameHeight
 
-    UpdatePoints(comboPoints, maxPoints)
-    AttachTo(namePlate, shown)
+    -- A new combo point on the same nameplate only fills a point; the row stays where it is.
+    if not placed then
+        LayoutPoints(maxPoints)
+        AttachTo(namePlate, shown)
+    end
+    FillPoints(comboPoints, maxPoints, suppressTransitions)
+    suppressTransitions = false
     row:Show()
 end
 
@@ -237,6 +446,7 @@ local function Refresh()
         wipe(shown)
         row:Hide()
     end
+    suppressTransitions = true
     Update()
 end
 
@@ -301,6 +511,15 @@ function NameplateComboPoints:SetOffsetX(offset)
     SetSetting("nameplateComboPointsOffsetX", math.min(math.max(offset, self.MIN_OFFSET_X), self.MAX_OFFSET_X))
 end
 
+-- "modern" or "classic", see STYLES.
+function NameplateComboPoints:GetStyle()
+    return ns.charDb.nameplateComboPointsStyle
+end
+
+function NameplateComboPoints:SetStyle(style)
+    SetSetting("nameplateComboPointsStyle", style == "classic" and "classic" or "modern")
+end
+
 ns:RegisterCommand("combo", function(args)
     local value = args:lower()
     if value == "on" then
@@ -318,7 +537,10 @@ function NameplateComboPoints:OnEnable()
     row = CreateFrame("Frame", nil, UIParent)
     row:Hide()
 
-    ns:RegisterEvent("PLAYER_TARGET_CHANGED", Update)
+    ns:RegisterEvent("PLAYER_TARGET_CHANGED", function()
+        suppressTransitions = true
+        Update()
+    end)
     -- Moving the points to a new target keeps the count, so no power event fires.
     ns:RegisterEvent("COMBO_TARGET_CHANGED", Update)
     ns:RegisterEvent("UNIT_POWER_FREQUENT", function(_, unit)
