@@ -54,6 +54,11 @@ ns.charDefaults = {
     -- maximum duration, the blacklist never.
     playerBuffsWhitelist = {},
     playerBuffsBlacklist = {},
+    -- Spell, item and NPC IDs in tooltips (Modules/TooltipIds.lua). Change with
+    -- "/gryphonframes spellids|itemids|npcids on|off".
+    tooltipSpellIds = false,
+    tooltipItemIds = false,
+    tooltipNpcIds = false,
 }
 
 -- Registers a module. A module may implement:

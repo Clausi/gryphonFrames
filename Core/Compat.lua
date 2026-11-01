@@ -25,6 +25,105 @@ function Compat.IsSecret(value)
     return issecretvalue ~= nil and issecretvalue(value)
 end
 
+-- Forever builds tooltips from tooltip data (Blizzard_GameTooltip/Mainline/GameTooltip.lua,
+-- GameTooltipDataMixin) and calls the post calls of TooltipDataProcessor with it. The Classic
+-- GameTooltip (Blizzard_GameTooltip/Classic/GameTooltip.lua) has no tooltip data: it fires the
+-- scripts OnTooltipSetSpell and OnTooltipSetItem, and nothing for auras.
+local hasTooltipData = TooltipDataProcessor ~= nil and GameTooltip.ProcessInfo ~= nil
+
+-- Tooltips the Classic hooks are added to. ItemRefTooltip shows links clicked in chat.
+local CLASSIC_TOOLTIPS = { "GameTooltip", "ItemRefTooltip", "ShoppingTooltip1", "ShoppingTooltip2" }
+-- Classic methods that show an aura by index, with the filter they add to the filter argument
+-- (SetUnitAura takes the full filter).
+local CLASSIC_AURA_INDEX_METHODS = {
+    SetUnitAura = false,
+    SetUnitBuff = "HELPFUL",
+    SetUnitDebuff = "HARMFUL",
+}
+-- Classic methods that show an aura by its aura instance ID.
+local CLASSIC_AURA_INSTANCE_METHODS = {
+    "SetUnitAuraByAuraInstanceID",
+    "SetUnitBuffByAuraInstanceID",
+    "SetUnitDebuffByAuraInstanceID",
+}
+
+local function GetAuraFilter(methodFilter, filter)
+    if not methodFilter then
+        return filter
+    end
+    return filter and filter ~= "" and methodFilter .. "|" .. filter or methodFilter
+end
+
+-- Calls callback(tooltip, kind, value) after a tooltip shows a spell, an aura, an item or a unit.
+-- kind is "spell" (also for auras) or "item" with the ID, or "unit" with the unit's GUID. The
+-- callback may add lines; the tooltip is resized after it.
+function Compat.HookTooltipIds(callback)
+    if hasTooltipData then
+        local function Hook(kind, field)
+            return function(tooltip, tooltipData)
+                local value = tooltipData and tooltipData[field]
+                if value then
+                    callback(tooltip, kind, value)
+                end
+            end
+        end
+        TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Spell, Hook("spell", "id"))
+        TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.UnitAura, Hook("spell", "id"))
+        TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, Hook("item", "id"))
+        TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, Hook("unit", "guid"))
+        return
+    end
+
+    -- Units are only shown in GameTooltip.
+    GameTooltip:HookScript("OnTooltipSetUnit", function(self)
+        local _, unit = self:GetUnit()
+        local guid = unit and UnitGUID(unit)
+        if guid then
+            callback(self, "unit", guid)
+        end
+    end)
+
+    for _, name in ipairs(CLASSIC_TOOLTIPS) do
+        local tooltip = _G[name]
+        if tooltip then
+            tooltip:HookScript("OnTooltipSetSpell", function(self)
+                local _, spellId = self:GetSpell()
+                if spellId then
+                    callback(self, "spell", spellId)
+                end
+            end)
+            tooltip:HookScript("OnTooltipSetItem", function(self)
+                local _, link = self:GetItem()
+                local itemId = link and tonumber(link:match("item:(%d+)"))
+                if itemId then
+                    callback(self, "item", itemId)
+                end
+            end)
+        end
+    end
+    -- Lines added after the tooltip was shown need a Show() to resize it.
+    local function OnAura(tooltip, auraData)
+        if auraData and auraData.spellId then
+            callback(tooltip, "spell", auraData.spellId)
+            tooltip:Show()
+        end
+    end
+    for method, methodFilter in pairs(CLASSIC_AURA_INDEX_METHODS) do
+        if GameTooltip[method] then
+            hooksecurefunc(GameTooltip, method, function(self, unit, index, filter)
+                OnAura(self, C_UnitAuras.GetAuraDataByIndex(unit, index, GetAuraFilter(methodFilter, filter)))
+            end)
+        end
+    end
+    for _, method in ipairs(CLASSIC_AURA_INSTANCE_METHODS) do
+        if GameTooltip[method] then
+            hooksecurefunc(GameTooltip, method, function(self, unit, auraInstanceID)
+                OnAura(self, C_UnitAuras.GetAuraDataByAuraInstanceID(unit, auraInstanceID))
+            end)
+        end
+    end
+end
+
 -- Offset of the target cast bar's TOPLEFT from the target frame's BOTTOMLEFT, where Blizzard puts
 -- it while the target has no extra aura rows below the frame. Mirrors the non-aura branches of
 -- TargetSpellBarMixin:AdjustPosition(), so the values must follow Blizzard's code.

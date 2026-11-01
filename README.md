@@ -40,6 +40,7 @@ Modules/TargetCastBar.lua  Makes the target cast bar movable in Edit Mode
 Modules/NameplateComboPoints.lua  Shows combo points on the target's nameplate as well
 Modules/PlayerPowerTicks.lua  Shows energy and mana ticks and the five second rule on the player frame
 Modules/PlayerBuffs.lua  Shows the player's own buffs at the player frame, movable in Edit Mode
+Modules/TooltipIds.lua  Shows spell, item and NPC IDs in tooltips
 Modules/Options.lua    Options page in the game settings ("/gryphonframes options")
 Libs/                  Embedded libraries, not in the repo (fetched by the packager)
 ```
@@ -97,6 +98,11 @@ Lint with [luacheck](https://github.com/lunarmodules/luacheck). Place `luacheck.
   the current character, default off
 - `/gryphonframes buffs on|off` – show your own buffs at the player frame for the current character,
   default off (position, icon size and icons per row in Edit Mode)
+- `/gryphonframes spellids on|off` – show spell IDs in tooltips (spells, buffs, debuffs) for the
+  current character, default off
+- `/gryphonframes itemids on|off` – show item IDs in tooltips for the current character, default
+  off
+- `/gryphonframes npcids on|off` – show NPC IDs in tooltips for the current character, default off
 - `/gryphonframes debug` – toggle debug output (after a `/reload`, also the memory each module keeps)
 
 Modules add subcommands with `ns:RegisterCommand(name, handler, helpLines)`.
@@ -105,7 +111,8 @@ Modules add subcommands with `ns:RegisterCommand(name, handler, helpLines)`.
 
 All options live in `Modules/Options.lua` (Esc > Options > AddOns > GryphonFrames), loaded after
 the other modules. General options are on the main page; everything on unit frames goes into the
-"Unit Frames" subcategory and everything on nameplates into "Nameplates", one section per feature.
+"Unit Frames" subcategory, everything on nameplates into "Nameplates" and everything on tooltips
+into "Tooltips", one section per feature.
 Proxy settings read and write `ns.db` and `ns.charDb` through the getters and setters of the
 modules (e.g. `NameplateComboPoints:SetScale`), so a change takes effect right away.
 Opening the page by command is blocked in combat.

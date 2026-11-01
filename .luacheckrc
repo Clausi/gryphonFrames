@@ -19,6 +19,7 @@ read_globals = {
     -- WoW Lua extensions
     "format",
     "floor",
+    "strsplit",
     "strtrim",
     "issecretvalue",
     "hooksecurefunc",
@@ -41,14 +42,20 @@ read_globals = {
     "GetLocale",
     "GetTime",
     "InCombatLockdown",
+    "UnitGUID",
     "UnitIsUnit",
     "UnitPower",
     "UnitPowerMax",
     "UnitPowerType",
     "UpdateAddOnMemoryUsage",
 
-    -- Global strings
+    -- Global strings and colors
     "CANCEL",
+    "HIGHLIGHT_FONT_COLOR",
+    "NORMAL_FONT_COLOR",
+
+    -- Tooltips
+    "TooltipDataProcessor",
 
     -- UI helpers
     "CreateColor",
