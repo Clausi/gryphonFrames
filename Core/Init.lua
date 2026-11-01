@@ -75,3 +75,29 @@ function ns:RegisterEvent(event, handler)
     end
     table.insert(eventHandlers[event], handler)
 end
+
+-- Unit events for one unit only: ns:RegisterUnitEvent("UNIT_EVENT", "player", function(event, ...) end)
+-- The game filters by unit (RegisterUnitEvent), so the handler does not run for the events of
+-- other units (group, raid, nameplates). One frame per unit, because RegisterUnitEvent replaces
+-- the unit filter of an event registered on the same frame before.
+local unitEventFrames = {}
+
+function ns:RegisterUnitEvent(event, unit, handler)
+    local unitFrame = unitEventFrames[unit]
+    if not unitFrame then
+        unitFrame = CreateFrame("Frame")
+        unitFrame.handlers = {}
+        unitFrame:SetScript("OnEvent", function(frame, unitEvent, ...)
+            local handlers = frame.handlers[unitEvent]
+            for i = 1, #handlers do
+                handlers[i](unitEvent, ...)
+            end
+        end)
+        unitEventFrames[unit] = unitFrame
+    end
+    if not unitFrame.handlers[event] then
+        unitFrame.handlers[event] = {}
+        unitFrame:RegisterUnitEvent(event, unit)
+    end
+    table.insert(unitFrame.handlers[event], handler)
+end
