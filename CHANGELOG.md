@@ -27,7 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ticks (`/gryphonframes mana on|off`, per character, off by default).
 - Own buffs at the player frame: all buffs you cast, with stacks, remaining time and tooltip
   (`/gryphonframes buffs on|off`, per character, off by default). Below the power bar of the
-  player frame, or anywhere in Edit Mode, with icon size and icons per row per layout.
+  player frame, or anywhere in Edit Mode, with icon size, icons per row, alignment (left to right,
+  centered or right to left) and sort order (default, remaining time, full duration, name or
+  whitelist order, optionally reversed) per layout.
 - Own buffs: a maximum duration hides long buffs, an option hides buffs without a duration
   (forms, auras, aspects), a whitelist always shows buffs and a blacklist hides them, by spell ID
   or aura name, and an option shows only the whitelist (per character, in the options).
