@@ -36,10 +36,17 @@ GryphonFrames improves Blizzard's own frames instead of replacing them. Everythi
   whitelist and blacklist by spell ID or aura name, or show only the whitelist
 - Turn it on in the addon options or with `/gryphonframes buffs on`, per character
 
+### IDs in tooltips
+- Spells, buffs, debuffs, items and NPCs show their ID in the tooltip, handy for the buff whitelist
+- Spell IDs, item IDs and NPC IDs are turned on separately, in the addon options or with
+  `/gryphonframes spellids on`, `/gryphonframes itemids on` and `/gryphonframes npcids on`, per
+  character
+
 ## Options
 
 Options > AddOns > GryphonFrames, or `/gryphonframes options`. Unit frame options are under
-GryphonFrames > Unit Frames, nameplate options under GryphonFrames > Nameplates.
+GryphonFrames > Unit Frames, nameplate options under GryphonFrames > Nameplates, tooltip options
+under GryphonFrames > Tooltips.
 
 ## Slash commands
 
@@ -50,3 +57,6 @@ GryphonFrames > Unit Frames, nameplate options under GryphonFrames > Nameplates.
 - `/gryphonframes energy on|off` – energy ticks on the player frame
 - `/gryphonframes mana on|off` – mana ticks and five second rule on the player frame
 - `/gryphonframes buffs on|off` – own buffs at the player frame
+- `/gryphonframes spellids on|off` – spell IDs in tooltips
+- `/gryphonframes itemids on|off` – item IDs in tooltips
+- `/gryphonframes npcids on|off` – NPC IDs in tooltips

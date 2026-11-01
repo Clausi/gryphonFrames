@@ -30,6 +30,7 @@ Modules\TargetCastBar.lua
 Modules\NameplateComboPoints.lua
 Modules\PlayerPowerTicks.lua
 Modules\PlayerBuffs.lua
+Modules\TooltipIds.lua
 Modules\Options.lua
 
 # Bootstrap (must be loaded last)

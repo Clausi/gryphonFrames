@@ -209,6 +209,29 @@ local function RegisterPlayerBuffs(unitFrames)
     end
 end
 
+-- Spell, item and NPC IDs in tooltips (Modules/TooltipIds.lua).
+local function RegisterTooltipIds(tooltips)
+    local TooltipIds = ns.modules.TooltipIds
+    local kinds = {
+        { kind = "spell", default = ns.charDefaults.tooltipSpellIds },
+        { kind = "item", default = ns.charDefaults.tooltipItemIds },
+        { kind = "npc", default = ns.charDefaults.tooltipNpcIds },
+    }
+    for _, entry in ipairs(kinds) do
+        local kind = entry.kind
+        local key = kind:upper() .. "_IDS"
+        local enabled = RegisterProxySetting(tooltips, "TOOLTIP_" .. key, Settings.VarType.Boolean,
+            L["OPTIONS_TOOLTIP_" .. key], entry.default,
+            function()
+                return TooltipIds:IsEnabled(kind)
+            end,
+            function(value)
+                TooltipIds:SetEnabled(kind, value)
+            end)
+        Settings.CreateCheckbox(tooltips, enabled, L["OPTIONS_TOOLTIP_" .. key .. "_TOOLTIP"])
+    end
+end
+
 local function RegisterSettings()
     local chatMessages = RegisterProxySetting(category, "CHAT_MESSAGES", Settings.VarType.Boolean,
         L["OPTIONS_CHAT_MESSAGES"], ns.charDefaults.chatMessages,
@@ -220,11 +243,14 @@ local function RegisterSettings()
         end)
     Settings.CreateCheckbox(category, chatMessages, L["OPTIONS_CHAT_MESSAGES_TOOLTIP"])
 
-    -- Subcategories for all options of the unit frames and of the nameplates; each feature is a
+    -- Subcategories for all options of the nameplates, tooltips and unit frames; each feature is a
     -- section in one of them. They are listed in the order they are registered: alphabetical by
     -- their English names, in every language.
     local nameplates = Settings.RegisterVerticalLayoutSubcategory(category, L["OPTIONS_NAMEPLATES"])
     RegisterComboPoints(nameplates)
+
+    local tooltips = Settings.RegisterVerticalLayoutSubcategory(category, L["OPTIONS_TOOLTIPS"])
+    RegisterTooltipIds(tooltips)
 
     local unitFrames = Settings.RegisterVerticalLayoutSubcategory(category, L["OPTIONS_UNIT_FRAMES"])
     -- The "Player Frame" section starts in RegisterPowerTicks().

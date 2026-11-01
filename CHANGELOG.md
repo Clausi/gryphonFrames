@@ -31,5 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Own buffs: a maximum duration hides long buffs, an option hides buffs without a duration
   (forms, auras, aspects), a whitelist always shows buffs and a blacklist hides them, by spell ID
   or aura name, and an option shows only the whitelist (per character, in the options).
+- IDs in tooltips: spells, buffs and debuffs show their spell ID
+  (`/gryphonframes spellids on|off`), items their item ID (`/gryphonframes itemids on|off`) and
+  NPCs their NPC ID (`/gryphonframes npcids on|off`), each per character and off by default.
 - Addon options in Options > AddOns > GryphonFrames, or with `/gryphonframes options`. Nameplate
-  options are in the subcategory "Nameplates", unit frame options in "Unit Frames".
+  options are in the subcategory "Nameplates", tooltip options in "Tooltips", unit frame options
+  in "Unit Frames".
