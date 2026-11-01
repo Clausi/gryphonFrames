@@ -34,10 +34,12 @@ Locales/deDE.lua       German translation
 Core/Init.lua          Namespace, saved variable defaults, module, command and event registry
 Core/Compat.lua        Client differences (Forever, Classic Era, Anniversary)
 Core/Util.lua          Chat output, debug and memory helpers, defaults merging
+Core/ListEditor.lua    Dialog to edit a list, one entry per line (buff whitelist and blacklist)
 Core/Main.lua          Bootstrap: saved variables, module lifecycle, slash commands
 Modules/TargetCastBar.lua  Makes the target cast bar movable in Edit Mode
 Modules/NameplateComboPoints.lua  Shows combo points on the target's nameplate as well
 Modules/PlayerPowerTicks.lua  Shows energy and mana ticks and the five second rule on the player frame
+Modules/PlayerBuffs.lua  Shows the player's own buffs at the player frame, movable in Edit Mode
 Modules/Options.lua    Options page in the game settings ("/gryphonframes options")
 Libs/                  Embedded libraries, not in the repo (fetched by the packager)
 ```
@@ -93,6 +95,8 @@ Lint with [luacheck](https://github.com/lunarmodules/luacheck). Place `luacheck.
   default off
 - `/gryphonframes mana on|off` – show mana ticks and the five second rule on the player frame for
   the current character, default off
+- `/gryphonframes buffs on|off` – show your own buffs at the player frame for the current character,
+  default off (position, icon size and icons per row in Edit Mode)
 - `/gryphonframes debug` – toggle debug output (after a `/reload`, also the memory each module keeps)
 
 Modules add subcommands with `ns:RegisterCommand(name, handler, helpLines)`.

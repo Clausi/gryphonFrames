@@ -136,6 +136,79 @@ local function RegisterPowerTicks(unitFrames)
     Settings.CreateCheckbox(unitFrames, mana, L["OPTIONS_MANA_TICKS_TOOLTIP"])
 end
 
+-- Own buffs at the player frame (Modules/PlayerBuffs.lua). Position and size are in Edit Mode.
+local function RegisterPlayerBuffs(unitFrames)
+    local PlayerBuffs = ns.modules.PlayerBuffs
+    local enabled = RegisterProxySetting(unitFrames, "PLAYER_BUFFS", Settings.VarType.Boolean,
+        L["OPTIONS_PLAYER_BUFFS"], ns.charDefaults.playerBuffs,
+        function()
+            return PlayerBuffs:IsEnabled()
+        end,
+        function(value)
+            PlayerBuffs:SetEnabled(value)
+        end)
+    Settings.CreateCheckbox(unitFrames, enabled, L["OPTIONS_PLAYER_BUFFS_TOOLTIP"])
+
+    local maxDuration = RegisterProxySetting(unitFrames, "PLAYER_BUFFS_MAX_DURATION", Settings.VarType.Number,
+        L["OPTIONS_PLAYER_BUFFS_MAX_DURATION"], ns.charDefaults.playerBuffsMaxDuration,
+        function()
+            return PlayerBuffs:GetMaxDuration()
+        end,
+        function(value)
+            PlayerBuffs:SetMaxDuration(value)
+        end)
+    local function GetMaxDurationOptions()
+        local container = Settings.CreateControlTextContainer()
+        for _, seconds in ipairs(PlayerBuffs.MAX_DURATIONS) do
+            local text
+            if seconds == 0 then
+                text = L["OPTIONS_PLAYER_BUFFS_MAX_DURATION_NONE"]
+            elseif seconds == 60 then
+                text = L["OPTIONS_PLAYER_BUFFS_MINUTE"]
+            elseif seconds < 60 then
+                text = format(L["OPTIONS_PLAYER_BUFFS_SECONDS"], seconds)
+            else
+                text = format(L["OPTIONS_PLAYER_BUFFS_MINUTES"], seconds / 60)
+            end
+            container:Add(seconds, text)
+        end
+        return container:GetData()
+    end
+    Settings.CreateDropdown(unitFrames, maxDuration, GetMaxDurationOptions,
+        L["OPTIONS_PLAYER_BUFFS_MAX_DURATION_TOOLTIP"])
+
+    local hidePermanent = RegisterProxySetting(unitFrames, "PLAYER_BUFFS_HIDE_PERMANENT", Settings.VarType.Boolean,
+        L["OPTIONS_PLAYER_BUFFS_HIDE_PERMANENT"], ns.charDefaults.playerBuffsHidePermanent,
+        function()
+            return PlayerBuffs:IsHidingPermanent()
+        end,
+        function(value)
+            PlayerBuffs:SetHidingPermanent(value)
+        end)
+    Settings.CreateCheckbox(unitFrames, hidePermanent, L["OPTIONS_PLAYER_BUFFS_HIDE_PERMANENT_TOOLTIP"])
+
+    local whitelistOnly = RegisterProxySetting(unitFrames, "PLAYER_BUFFS_WHITELIST_ONLY", Settings.VarType.Boolean,
+        L["OPTIONS_PLAYER_BUFFS_WHITELIST_ONLY"], ns.charDefaults.playerBuffsWhitelistOnly,
+        function()
+            return PlayerBuffs:IsWhitelistOnly()
+        end,
+        function(value)
+            PlayerBuffs:SetWhitelistOnly(value)
+        end)
+    Settings.CreateCheckbox(unitFrames, whitelistOnly, L["OPTIONS_PLAYER_BUFFS_WHITELIST_ONLY_TOOLTIP"])
+
+    -- The lists are edited in ns.ListEditor, one spell ID or aura name per line.
+    local layout = SettingsPanel:GetLayout(unitFrames)
+    for _, kind in ipairs({ "whitelist", "blacklist" }) do
+        local key = "OPTIONS_PLAYER_BUFFS_" .. kind:upper()
+        layout:AddInitializer(CreateSettingsButtonInitializer(L[key], L["OPTIONS_PLAYER_BUFFS_EDIT"], function()
+            ns.ListEditor:Open(L[key], L[key .. "_DESC"], PlayerBuffs:GetList(kind), function(entries)
+                PlayerBuffs:SetList(kind, entries)
+            end)
+        end, L[key .. "_TOOLTIP"], true))
+    end
+end
+
 local function RegisterSettings()
     local chatMessages = RegisterProxySetting(category, "CHAT_MESSAGES", Settings.VarType.Boolean,
         L["OPTIONS_CHAT_MESSAGES"], ns.charDefaults.chatMessages,
@@ -154,7 +227,9 @@ local function RegisterSettings()
     RegisterComboPoints(nameplates)
 
     local unitFrames = Settings.RegisterVerticalLayoutSubcategory(category, L["OPTIONS_UNIT_FRAMES"])
+    -- The "Player Frame" section starts in RegisterPowerTicks().
     RegisterPowerTicks(unitFrames)
+    RegisterPlayerBuffs(unitFrames)
 end
 
 function Options:OnInitialize()

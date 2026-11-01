@@ -33,6 +33,7 @@ read_globals = {
     "C_NamePlate",
     "C_Texture",
     "C_Timer",
+    "C_UnitAuras",
     "CreateFrame",
     "Enum",
     "GetAddOnMemoryUsage",
@@ -40,16 +41,22 @@ read_globals = {
     "GetLocale",
     "GetTime",
     "InCombatLockdown",
+    "UnitIsUnit",
     "UnitPower",
     "UnitPowerMax",
     "UnitPowerType",
     "UpdateAddOnMemoryUsage",
 
+    -- Global strings
+    "CANCEL",
+
     -- UI helpers
     "CreateColor",
+    "CreateSettingsButtonInitializer",
     "CreateSettingsListSectionHeaderInitializer",
     "DropdownButtonMixin",
     "MinimalSliderWithSteppersMixin",
+    "SecondsToTimeAbbrev",
     "Settings",
     "SettingsPanel",
 
@@ -59,6 +66,7 @@ read_globals = {
 
     -- Frames
     "DEFAULT_CHAT_FRAME",
+    "GameTooltip",
     "NamePlateDriverFrame",
     -- Returns the power bar of the player frame on all clients (see PlayerPowerTicks.lua).
     "PlayerFrame_GetManaBar",

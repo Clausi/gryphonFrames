@@ -29,6 +29,13 @@ GryphonFrames improves Blizzard's own frames instead of replacing them. Everythi
 - Then a spark shows when the next mana tick comes; hidden at full mana
 - Turn it on in the addon options or with `/gryphonframes mana on`, per character
 
+### Own buffs at the player frame
+- Shows the buffs you cast at the player frame, with stacks, remaining time and tooltip
+- Below the power bar, or anywhere in **Edit Mode**, with icon size and icons per row per layout
+- Hide long buffs with a maximum duration, and buffs without a duration (forms, auras, aspects);
+  whitelist and blacklist by spell ID or aura name, or show only the whitelist
+- Turn it on in the addon options or with `/gryphonframes buffs on`, per character
+
 ## Options
 
 Options > AddOns > GryphonFrames, or `/gryphonframes options`. Unit frame options are under
@@ -42,3 +49,4 @@ GryphonFrames > Unit Frames, nameplate options under GryphonFrames > Nameplates.
 - `/gryphonframes combo on|off` – combo points on the target's nameplate
 - `/gryphonframes energy on|off` – energy ticks on the player frame
 - `/gryphonframes mana on|off` – mana ticks and five second rule on the player frame
+- `/gryphonframes buffs on|off` – own buffs at the player frame

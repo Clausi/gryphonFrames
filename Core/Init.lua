@@ -13,6 +13,11 @@ ns.defaults = {
     targetCastBar = {
         layouts = {},
     },
+    -- Position, icon size and icons per row of the player buffs per Edit Mode layout. Filled by
+    -- Modules/PlayerBuffs.lua.
+    playerBuffs = {
+        layouts = {},
+    },
 }
 
 -- Per character (GryphonFramesCharDB, ns.charDb): data and settings only the logged-in character needs.
@@ -36,6 +41,19 @@ ns.charDefaults = {
     playerEnergyTicks = false,
     -- Mana ticks include the five second rule after a mana spend.
     playerManaTicks = false,
+    -- Buffs from the player at the player frame (Modules/PlayerBuffs.lua). Change with
+    -- "/gryphonframes buffs on|off".
+    playerBuffs = false,
+    -- Buffs with a longer full duration in seconds are hidden, 0 = no limit.
+    playerBuffsMaxDuration = 0,
+    -- Hides buffs without a duration (forms, auras, aspects).
+    playerBuffsHidePermanent = false,
+    -- Shows only the buffs on the whitelist.
+    playerBuffsWhitelistOnly = false,
+    -- Spell IDs (numbers) or aura names (strings): the whitelist is always shown, also above the
+    -- maximum duration, the blacklist never.
+    playerBuffsWhitelist = {},
+    playerBuffsBlacklist = {},
 }
 
 -- Registers a module. A module may implement:
