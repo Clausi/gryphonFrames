@@ -543,16 +543,8 @@ function NameplateComboPoints:OnEnable()
     end)
     -- Moving the points to a new target keeps the count, so no power event fires.
     ns:RegisterEvent("COMBO_TARGET_CHANGED", Update)
-    ns:RegisterEvent("UNIT_POWER_FREQUENT", function(_, unit)
-        if unit == "player" then
-            Update()
-        end
-    end)
-    ns:RegisterEvent("UNIT_MAXPOWER", function(_, unit)
-        if unit == "player" then
-            Update()
-        end
-    end)
+    ns:RegisterUnitEvent("UNIT_POWER_FREQUENT", "player", Update)
+    ns:RegisterUnitEvent("UNIT_MAXPOWER", "player", Update)
     -- The target's nameplate appears and disappears with distance and line of sight, and Blizzard
     -- reuses nameplate frames for other units.
     ns:RegisterEvent("NAME_PLATE_UNIT_ADDED", Update)
