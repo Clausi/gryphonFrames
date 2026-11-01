@@ -12,9 +12,13 @@ ns.Compat = Compat
 local hasAuraContainer = TargetFrame and TargetFrame.GetAuraContainer ~= nil
 
 -- Forever has the combo point atlases of the Mainline UI (Blizzard_UnitFrame/Mainline/
--- RogueComboPoint.xml). Classic Era and Anniversary only have the texture of the Classic ComboFrame
--- (Blizzard_UnitFrame/Classic/ComboFrame.xml).
+-- RogueComboPoint.xml). Classic Era and Anniversary do not have them (checked in-game); they only
+-- have the texture of the Classic ComboFrame (Blizzard_UnitFrame/Classic/ComboFrame.xml), which
+-- Forever's code no longer uses.
 local hasComboPointAtlas = C_Texture.GetAtlasInfo("uf-roguecp-icon-red") ~= nil
+
+-- Default style of the nameplate combo points: what the client's own combo points look like.
+ns.charDefaults.nameplateComboPointsStyle = hasComboPointAtlas and "modern" or "classic"
 
 -- True if the value is a secret value. Clients without secret values have no issecretvalue.
 function Compat.IsSecret(value)
@@ -44,30 +48,10 @@ function Compat.GetTargetSpellBarOffset(spellBar)
     return x, y
 end
 
--- Adds the textures of a combo point to an own frame of 12x12 (the size of the Classic
--- ComboPointTemplate): an empty socket and point.Active, the filled point on top of it.
-function Compat.SetupComboPoint(point)
-    local background = point:CreateTexture(nil, "BACKGROUND")
-    local active = point:CreateTexture(nil, "ARTWORK")
-
-    if hasComboPointAtlas then
-        background:SetAtlas("uf-roguecp-bg-dis")
-        background:SetAllPoints()
-        active:SetAtlas("uf-roguecp-icon-red")
-        active:SetAllPoints()
-    else
-        -- Same textures and texture coordinates as ComboPointTemplate.
-        background:SetTexture("Interface\\ComboFrame\\ComboPoint")
-        background:SetSize(12, 16)
-        background:SetPoint("TOPLEFT")
-        background:SetTexCoord(0, 0.375, 0, 1)
-        active:SetTexture("Interface\\ComboFrame\\ComboPoint")
-        active:SetSize(8, 16)
-        active:SetPoint("TOPLEFT", 2, 0)
-        active:SetTexCoord(0.375, 0.5625, 0, 1)
-    end
-
-    point.Active = active
+-- True if the client has Blizzard's modern combo point art (Forever). Without it, the modern style
+-- of the nameplate combo points is drawn from plain shapes.
+function Compat.HasModernComboPointArt()
+    return hasComboPointAtlas
 end
 
 -- Hands the target cast bar back to Blizzard's anchoring after the addon had anchored it.

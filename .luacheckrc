@@ -43,6 +43,7 @@ read_globals = {
     "UpdateAddOnMemoryUsage",
 
     -- UI helpers
+    "CreateColor",
     "CreateSettingsListSectionHeaderInitializer",
     "DropdownButtonMixin",
     "MinimalSliderWithSteppersMixin",

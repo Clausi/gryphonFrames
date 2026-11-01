@@ -31,6 +31,23 @@ local function RegisterComboPoints(nameplates)
         end)
     Settings.CreateCheckbox(nameplates, enabled, L["OPTIONS_COMBO_TOOLTIP"])
 
+    local style = RegisterProxySetting(nameplates, "COMBO_POINTS_STYLE", Settings.VarType.String,
+        L["OPTIONS_COMBO_STYLE"], ns.charDefaults.nameplateComboPointsStyle,
+        function()
+            return NameplateComboPoints:GetStyle()
+        end,
+        function(value)
+            NameplateComboPoints:SetStyle(value)
+        end)
+    local function GetStyleOptions()
+        local container = Settings.CreateControlTextContainer()
+        for _, value in ipairs(NameplateComboPoints.STYLES) do
+            container:Add(value, L["OPTIONS_COMBO_STYLE_" .. value:upper()])
+        end
+        return container:GetData()
+    end
+    Settings.CreateDropdown(nameplates, style, GetStyleOptions, L["OPTIONS_COMBO_STYLE_TOOLTIP"])
+
     local scale = RegisterProxySetting(nameplates, "COMBO_POINTS_SCALE", Settings.VarType.Number,
         L["OPTIONS_COMBO_SCALE"], ns.charDefaults.nameplateComboPointsScale,
         function()
