@@ -1,0 +1,48 @@
+local _, ns = ...
+
+if GetLocale() ~= "deDE" then
+    return
+end
+
+local L = ns.L
+
+L["ADDON_LOADED"] = "Version %s geladen. Tippe /gryphonframes für Hilfe."
+L["DEBUG_ON"] = "Debug-Ausgabe aktiviert."
+L["DEBUG_OFF"] = "Debug-Ausgabe deaktiviert."
+L["HELP_HEADER"] = "Befehle:"
+L["HELP_VERSION"] = "/gryphonframes version - zeigt die Addon-Version"
+L["HELP_DEBUG"] = "/gryphonframes debug - schaltet die Debug-Ausgabe um"
+L["HELP_CHAT"] = "/gryphonframes chat on||off - automatische Chat-Meldungen (Login, Hinweise)"
+L["CHAT_ON"] = "Automatische Chat-Meldungen sind für diesen Charakter an."
+L["CHAT_OFF"] = "Automatische Chat-Meldungen sind für diesen Charakter aus. Antworten auf Befehle erscheinen weiter."
+L["TARGET_CAST_BAR"] = "Zauberleiste des Ziels"
+L["TARGET_CAST_BAR_ATTACH"] = "An Zielfenster binden"
+L["TARGET_CAST_BAR_ATTACH_DESC"] = "Zeigt die Zauberleiste unter dem Zielfenster, wie bei Blizzard. "
+    .. "Verschieben löst sie vom Zielfenster."
+L["HELP_COMBO"] = "/gryphonframes combo on||off - Kombopunkte zusätzlich an der Namensplakette des Ziels"
+L["COMBO_ON"] = "Kombopunkte an der Namensplakette des Ziels sind für diesen Charakter an."
+L["COMBO_OFF"] = "Kombopunkte an der Namensplakette des Ziels sind für diesen Charakter aus."
+L["HELP_OPTIONS"] = "/gryphonframes options - öffnet die Optionen"
+L["OPTIONS_IN_COMBAT"] = "Im Kampf lassen sich die Optionen nicht per Befehl öffnen. "
+    .. "Esc > Optionen > AddOns nutzen oder nach dem Kampf erneut versuchen."
+L["OPTIONS_CHAT_MESSAGES"] = "Chat-Meldungen"
+L["OPTIONS_CHAT_MESSAGES_TOOLTIP"] = "Zeigt automatische Chat-Meldungen (Login, Hinweise). Antworten auf Befehle "
+    .. "erscheinen immer. Gilt für diesen Charakter."
+L["OPTIONS_NAMEPLATES"] = "Namensplaketten"
+L["OPTIONS_COMBO_HEADER"] = "Kombopunkte"
+L["OPTIONS_COMBO"] = "An Namensplakette des Ziels"
+L["OPTIONS_COMBO_TOOLTIP"] = "Zeigt deine Kombopunkte zusätzlich an der Namensplakette des Ziels. "
+    .. "Gegnerische Namensplaketten müssen an sein. Gilt für diesen Charakter."
+L["OPTIONS_COMBO_SCALE"] = "Größe"
+L["OPTIONS_COMBO_SCALE_TOOLTIP"] = "Größe der Kombopunkte an der Namensplakette. Gilt für diesen Charakter."
+L["OPTIONS_COMBO_POSITION"] = "Position"
+L["OPTIONS_COMBO_POSITION_TOOLTIP"] = "Über dem Namen (über dem Lebensbalken, wenn der Namensplaketten-Stil "
+    .. "den Namen im Balken zeigt) oder unter dem Lebensbalken. Während das Ziel zaubert, rücken sie unter die "
+    .. "Zauberleiste. Richtet sich nach dem Namensplaketten-Stil. Gilt für diesen Charakter."
+L["OPTIONS_COMBO_POSITION_ABOVE"] = "Über dem Namen"
+L["OPTIONS_COMBO_POSITION_BELOW"] = "Unter der Namensplakette"
+L["OPTIONS_COMBO_GAP"] = "Abstand"
+L["OPTIONS_COMBO_GAP_TOOLTIP"] = "Abstand in Pixeln zum Namen oder zum Lebensbalken. Gilt für diesen Charakter."
+L["OPTIONS_COMBO_OFFSET_X"] = "Links / Rechts"
+L["OPTIONS_COMBO_OFFSET_X_TOOLTIP"] = "Verschiebt die Kombopunkte innerhalb der Breite des Lebensbalkens: "
+    .. "-100 % ganz links, 0 % mittig, 100 % ganz rechts. Gilt für diesen Charakter."

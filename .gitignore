@@ -1,0 +1,8 @@
+# Local tooling (luacheck.exe etc.)
+.tools/
+
+# Libraries, fetched by the packager (.pkgmeta) or locally by .tools/fetch-libs.cmd
+Libs/
+
+# Local media (screenshots, logos)
+.media/

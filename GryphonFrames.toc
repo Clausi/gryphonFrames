@@ -1,0 +1,33 @@
+## Interface: 16001, 11509, 20506
+## Title: GryphonFrames
+## Notes: Improves the default Blizzard frames.
+## Notes-deDE: Verbessert die Standard-Fenster von Blizzard.
+## Category: User Interface
+## Author: cklausl
+## Version: 0.1.0
+## SavedVariables: GryphonFramesDB
+## SavedVariablesPerCharacter: GryphonFramesCharDB
+## IconTexture: Interface\Icons\Ability_Mount_Gryphon_01
+## X-Category: Interface Enhancements
+## X-License: MIT
+
+# Libraries (fetched by the packager, see .pkgmeta)
+Libs\LibStub\LibStub.lua
+Libs\LibEditMode\embed.xml
+
+# Localization (enUS must be loaded first, it is the fallback)
+Locales\enUS.lua
+Locales\deDE.lua
+
+# Core
+Core\Init.lua
+Core\Compat.lua
+Core\Util.lua
+
+# Modules
+Modules\TargetCastBar.lua
+Modules\NameplateComboPoints.lua
+Modules\Options.lua
+
+# Bootstrap (must be loaded last)
+Core\Main.lua
