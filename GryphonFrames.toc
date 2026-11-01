@@ -23,11 +23,13 @@ Locales\deDE.lua
 Core\Init.lua
 Core\Compat.lua
 Core\Util.lua
+Core\ListEditor.lua
 
 # Modules
 Modules\TargetCastBar.lua
 Modules\NameplateComboPoints.lua
 Modules\PlayerPowerTicks.lua
+Modules\PlayerBuffs.lua
 Modules\Options.lua
 
 # Bootstrap (must be loaded last)
