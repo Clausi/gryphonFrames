@@ -38,8 +38,11 @@ read_globals = {
     "GetAddOnMemoryUsage",
     "GetComboPoints",
     "GetLocale",
+    "GetTime",
     "InCombatLockdown",
+    "UnitPower",
     "UnitPowerMax",
+    "UnitPowerType",
     "UpdateAddOnMemoryUsage",
 
     -- UI helpers
@@ -57,6 +60,8 @@ read_globals = {
     -- Frames
     "DEFAULT_CHAT_FRAME",
     "NamePlateDriverFrame",
+    -- Returns the power bar of the player frame on all clients (see PlayerPowerTicks.lua).
+    "PlayerFrame_GetManaBar",
     "TargetFrame",
     -- Re-anchored after Blizzard's AdjustPosition() once it was moved in Edit Mode (see TargetCastBar.lua).
     "TargetFrameSpellBar",

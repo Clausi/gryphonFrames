@@ -3,7 +3,7 @@ local L = ns.L
 local Options = ns:RegisterModule("Options")
 
 -- Options page in Blizzard's settings (Esc > Options > AddOns > GryphonFrames) as a vertical list,
--- with a subcategory for everything on nameplates. The settings stay in ns.db and ns.charDb; proxy
+-- with subcategories for everything on unit frames and on nameplates. The settings stay in ns.db and ns.charDb; proxy
 -- settings read and write them there.
 
 local category
@@ -109,6 +109,33 @@ local function RegisterComboPoints(nameplates)
     Settings.CreateSlider(nameplates, offsetX, offsetOptions, L["OPTIONS_COMBO_OFFSET_X_TOOLTIP"])
 end
 
+-- Energy and mana ticks on the player frame (Modules/PlayerPowerTicks.lua).
+local function RegisterPowerTicks(unitFrames)
+    local PlayerPowerTicks = ns.modules.PlayerPowerTicks
+    local layout = SettingsPanel:GetLayout(unitFrames)
+    layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(L["OPTIONS_PLAYER_FRAME_HEADER"]))
+
+    local energy = RegisterProxySetting(unitFrames, "ENERGY_TICKS", Settings.VarType.Boolean,
+        L["OPTIONS_ENERGY_TICKS"], ns.charDefaults.playerEnergyTicks,
+        function()
+            return PlayerPowerTicks:IsEnergyEnabled()
+        end,
+        function(value)
+            PlayerPowerTicks:SetEnergyEnabled(value)
+        end)
+    Settings.CreateCheckbox(unitFrames, energy, L["OPTIONS_ENERGY_TICKS_TOOLTIP"])
+
+    local mana = RegisterProxySetting(unitFrames, "MANA_TICKS", Settings.VarType.Boolean,
+        L["OPTIONS_MANA_TICKS"], ns.charDefaults.playerManaTicks,
+        function()
+            return PlayerPowerTicks:IsManaEnabled()
+        end,
+        function(value)
+            PlayerPowerTicks:SetManaEnabled(value)
+        end)
+    Settings.CreateCheckbox(unitFrames, mana, L["OPTIONS_MANA_TICKS_TOOLTIP"])
+end
+
 local function RegisterSettings()
     local chatMessages = RegisterProxySetting(category, "CHAT_MESSAGES", Settings.VarType.Boolean,
         L["OPTIONS_CHAT_MESSAGES"], ns.charDefaults.chatMessages,
@@ -120,9 +147,14 @@ local function RegisterSettings()
         end)
     Settings.CreateCheckbox(category, chatMessages, L["OPTIONS_CHAT_MESSAGES_TOOLTIP"])
 
-    -- Subcategory for all options of the nameplates; each feature is a section in it.
+    -- Subcategories for all options of the unit frames and of the nameplates; each feature is a
+    -- section in one of them. They are listed in the order they are registered: alphabetical by
+    -- their English names, in every language.
     local nameplates = Settings.RegisterVerticalLayoutSubcategory(category, L["OPTIONS_NAMEPLATES"])
     RegisterComboPoints(nameplates)
+
+    local unitFrames = Settings.RegisterVerticalLayoutSubcategory(category, L["OPTIONS_UNIT_FRAMES"])
+    RegisterPowerTicks(unitFrames)
 end
 
 function Options:OnInitialize()
