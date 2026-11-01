@@ -11,8 +11,8 @@ local L = ns.L
 -- whitelist and a blacklist (spell IDs or aura names, per character).
 --
 -- Updates: UNIT_AURA of the player (filtered by unit in the client) rebuilds the icons only if an
--- aura from the player was added, or a shown aura changed or ran out. The remaining time is
--- updated by a ticker every TIMER_INTERVAL seconds, and only while a shown buff has a duration.
+-- aura from the player was added, or a shown aura changed or ran out. The client updates the
+-- remaining time itself (ns.Compat.SetAuraDurationText), also when it is secret.
 --
 -- Turned on per character in the options (Modules/Options.lua) or with "/gryphonframes buffs on"
 -- (ns.charDb.playerBuffs). Position, icon size, icons per row, alignment and sort order are saved
@@ -27,7 +27,6 @@ local FILTER = "HELPFUL|PLAYER"
 local SPACING = 2
 -- Height of the remaining time below an icon.
 local TIMER_HEIGHT = 10
-local TIMER_INTERVAL = 0.5
 -- Gap between the power bar of the player frame and the attached row.
 local ATTACH_GAP = 4
 PlayerBuffs.DEFAULT_ICON_SIZE, PlayerBuffs.MIN_ICON_SIZE, PlayerBuffs.MAX_ICON_SIZE = 24, 12, 48
@@ -48,7 +47,6 @@ local container
 local buttons = {}
 -- auraInstanceIDs of the shown buffs, to skip UNIT_AURA updates of other auras.
 local shownIds = {}
-local ticker
 
 local function GetLayouts()
     return ns.db.playerBuffs.layouts
@@ -121,7 +119,9 @@ end
 -- whitelist. With ns.charDb.playerBuffsWhitelistOnly only the whitelist is shown. Buffs without a
 -- duration (forms, auras, aspects) are hidden with ns.charDb.playerBuffsHidePermanent; the others
 -- only up to the maximum duration (ns.charDb.playerBuffsMaxDuration in seconds, 0 = no limit). The
--- maximum duration is the full duration of the buff, not the remaining time.
+-- maximum duration is the full duration of the buff, not the remaining time. With secret spell ID
+-- and name (combat restrictions), the lists cannot match: the buff is shown, also with
+-- playerBuffsWhitelistOnly, so the row does not become empty in combat.
 local function ShouldShow(auraData)
     if GetListPosition(lists.blacklist, auraData) then
         return false
@@ -130,7 +130,7 @@ local function ShouldShow(auraData)
         return true
     end
     if ns.charDb.playerBuffsWhitelistOnly then
-        return false
+        return ns.Compat.IsSecret(auraData.spellId) and ns.Compat.IsSecret(auraData.name)
     end
     local duration = auraData.duration
     if ns.Compat.IsSecret(duration) then
@@ -163,30 +163,11 @@ local function CreateButton()
     return button
 end
 
+-- Shows the remaining time below the icon, empty for buffs without a duration. The client keeps
+-- the text up to date; without the API for it, the text stays empty.
 local function UpdateDuration(button)
-    local expirationTime = button.expirationTime
-    if not expirationTime or expirationTime == 0 or ns.Compat.IsSecret(expirationTime) then
+    if not ns.Compat.SetAuraDurationText(button.Duration, "player", button.auraInstanceID) then
         button.Duration:SetText("")
-        return
-    end
-    local remaining = math.max(expirationTime - GetTime(), 0)
-    button.Duration:SetFormattedText(SecondsToTimeAbbrev(remaining))
-end
-
-local function UpdateDurations()
-    for _, button in ipairs(buttons) do
-        if button:IsShown() then
-            UpdateDuration(button)
-        end
-    end
-end
-
-local function SetTicker(needed)
-    if needed and not ticker then
-        ticker = C_Timer.NewTicker(TIMER_INTERVAL, UpdateDurations)
-    elseif not needed and ticker then
-        ticker:Cancel()
-        ticker = nil
     end
 end
 
@@ -280,7 +261,6 @@ end
 local function UpdateAuras()
     wipe(shownIds)
     local count = 0
-    local hasDuration = false
     if ns.charDb.playerBuffs then
         local index = 1
         local auraData = C_UnitAuras.GetAuraDataByIndex("player", index, FILTER)
@@ -304,24 +284,22 @@ local function UpdateAuras()
             local button = buttons[i] or CreateButton()
             buttons[i] = button
             button.auraInstanceID = auraData.auraInstanceID
-            button.expirationTime = auraData.expirationTime
             button.Icon:SetTexture(auraData.icon)
-            local applications = auraData.applications
-            button.Count:SetText((ns.Compat.IsSecret(applications) or applications > 1) and applications or "")
+            button.Count:SetText(ns.Compat.GetAuraStackText("player", auraData))
             UpdateDuration(button)
             button:Show()
-            shownIds[auraData.auraInstanceID] = true
-            if button.Duration:GetText() ~= "" then
-                hasDuration = true
+            -- A secret value cannot be a table key; IsRelevantUpdate() then updates on every change.
+            if not ns.Compat.IsSecret(auraData.auraInstanceID) then
+                shownIds[auraData.auraInstanceID] = true
             end
         end
     end
     for i = count + 1, #buttons do
         buttons[i]:Hide()
+        ns.Compat.SetAuraDurationText(buttons[i].Duration, nil)
     end
     LayoutButtons(count)
     UpdateContainerSize(count)
-    SetTicker(hasDuration)
 end
 
 -- Whether a UNIT_AURA update can change the shown buffs: a full update, a new aura from the
@@ -339,12 +317,12 @@ local function IsRelevantUpdate(updateInfo)
         end
     end
     for _, id in ipairs(updateInfo.updatedAuraInstanceIDs or {}) do
-        if shownIds[id] then
+        if ns.Compat.IsSecret(id) or shownIds[id] then
             return true
         end
     end
     for _, id in ipairs(updateInfo.removedAuraInstanceIDs or {}) do
-        if shownIds[id] then
+        if ns.Compat.IsSecret(id) or shownIds[id] then
             return true
         end
     end

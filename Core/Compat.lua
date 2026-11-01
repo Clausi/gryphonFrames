@@ -25,6 +25,87 @@ function Compat.IsSecret(value)
     return issecretvalue ~= nil and issecretvalue(value)
 end
 
+-- Stack count of an aura as text, empty below 2 stacks. A secret count (combat restrictions)
+-- cannot be compared: C_UnitAuras.GetAuraApplicationDisplayCount() formats it in the client. In
+-- the API docs of all three clients; without it, the secret count is shown as it is. Like most aura
+-- functions, it takes no secret arguments from addon code (SecretArguments "AllowedWhenUntainted").
+function Compat.GetAuraStackText(unit, auraData)
+    local applications = auraData.applications
+    if not Compat.IsSecret(applications) then
+        return applications > 1 and applications or ""
+    end
+    if C_UnitAuras.GetAuraApplicationDisplayCount and not Compat.IsSecret(auraData.auraInstanceID) then
+        return C_UnitAuras.GetAuraApplicationDisplayCount(unit, auraData.auraInstanceID, 2)
+    end
+    return applications
+end
+
+-- A duration text binding (C_DurationUtil) lets the client update a font string with the
+-- remaining time of a duration object, also when the time is secret. The aura container of the
+-- Mainline UI uses it the same way (Blizzard_AuraContainer/Blizzard_CustomAuraButton.lua). In the
+-- API docs of all three clients and checked in-game on Classic, the Classic UI itself does not use
+-- it.
+local hasDurationTextBinding = C_DurationUtil ~= nil and C_DurationUtil.CreateDurationTextBinding ~= nil
+    and C_StringUtil ~= nil and C_StringUtil.CreateSecondsFormatter ~= nil
+    and C_UnitAuras.GetAuraDuration ~= nil
+local durationBindings = {}
+local durationFormatter
+
+-- Formats like the aura buttons of the Mainline UI (Blizzard_AuraContainerShared.lua): one unit
+-- with a one letter abbreviation, e.g. "5m", the last unit rounded up. Not every client has all
+-- enums of the API docs (Anniversary has no Enum.SecondsFormatterRounding, checked in-game), so an
+-- option is only set if its enum and method exist.
+local function SetFormatterOption(formatter, method, enumName, valueName)
+    local enum = Enum[enumName]
+    if enum and enum[valueName] ~= nil and formatter[method] then
+        formatter[method](formatter, enum[valueName])
+    end
+end
+
+local function GetDurationFormatter()
+    if not durationFormatter then
+        durationFormatter = C_StringUtil.CreateSecondsFormatter()
+        SetFormatterOption(durationFormatter, "SetDefaultAbbreviation", "SecondsFormatterAbbreviation", "OneLetter")
+        SetFormatterOption(durationFormatter, "SetRounding", "SecondsFormatterRounding", "Truncate")
+        SetFormatterOption(durationFormatter, "SetMinInterval", "SecondsFormatterInterval", "Seconds")
+        if durationFormatter.SetCanRoundUpLastUnit then
+            durationFormatter:SetCanRoundUpLastUnit(true)
+        end
+        if durationFormatter.SetDesiredUnitCount then
+            durationFormatter:SetDesiredUnitCount(1)
+        end
+    end
+    return durationFormatter
+end
+
+-- Lets the client show the remaining time of the aura in the font string and keep it up to date.
+-- Without an auraInstanceID, it stops updating the font string. Returns false if the client
+-- cannot do it.
+function Compat.SetAuraDurationText(fontString, unit, auraInstanceID)
+    local binding = durationBindings[fontString]
+    if not auraInstanceID then
+        if binding then
+            binding:SetEnabled(false)
+        end
+        return false
+    end
+    if not hasDurationTextBinding or Compat.IsSecret(auraInstanceID) then
+        return false
+    end
+    if not binding then
+        binding = C_DurationUtil.CreateDurationTextBinding()
+        binding:SetFontString(fontString)
+        binding:SetFormatter(GetDurationFormatter())
+        -- Buffs without a duration have a zero duration.
+        binding:SetZeroDurationText("")
+        binding:SetExpiredText("")
+        durationBindings[fontString] = binding
+    end
+    binding:SetDuration(C_UnitAuras.GetAuraDuration(unit, auraInstanceID))
+    binding:SetEnabled(true)
+    return true
+end
+
 -- Forever builds tooltips from tooltip data (Blizzard_GameTooltip/Mainline/GameTooltip.lua,
 -- GameTooltipDataMixin) and calls the post calls of TooltipDataProcessor with it. The Classic
 -- GameTooltip (Blizzard_GameTooltip/Classic/GameTooltip.lua) has no tooltip data: it fires the
