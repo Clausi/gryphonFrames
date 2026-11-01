@@ -31,6 +31,11 @@ ns.charDefaults = {
     -- Horizontal position in percent of the free space: -100 left, 0 centered, 100 right.
     nameplateComboPointsOffsetX = 0,
     -- nameplateComboPointsStyle ("modern" or "classic") depends on the client, see Core/Compat.lua.
+    -- Energy and mana ticks on the power bar of the player frame (Modules/PlayerPowerTicks.lua).
+    -- Change with "/gryphonframes energy on|off" and "/gryphonframes mana on|off".
+    playerEnergyTicks = false,
+    -- Mana ticks include the five second rule after a mana spend.
+    playerManaTicks = false,
 }
 
 -- Registers a module. A module may implement:

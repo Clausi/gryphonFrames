@@ -37,6 +37,7 @@ Core/Util.lua          Chat output, debug and memory helpers, defaults merging
 Core/Main.lua          Bootstrap: saved variables, module lifecycle, slash commands
 Modules/TargetCastBar.lua  Makes the target cast bar movable in Edit Mode
 Modules/NameplateComboPoints.lua  Shows combo points on the target's nameplate as well
+Modules/PlayerPowerTicks.lua  Shows energy and mana ticks and the five second rule on the player frame
 Modules/Options.lua    Options page in the game settings ("/gryphonframes options")
 Libs/                  Embedded libraries, not in the repo (fetched by the packager)
 ```
@@ -88,6 +89,10 @@ Lint with [luacheck](https://github.com/lunarmodules/luacheck). Place `luacheck.
   default on
 - `/gryphonframes combo on|off` – also show combo points on the target's nameplate for the current
   character, default off (position, size and gap in the options)
+- `/gryphonframes energy on|off` – show energy ticks on the player frame for the current character,
+  default off
+- `/gryphonframes mana on|off` – show mana ticks and the five second rule on the player frame for
+  the current character, default off
 - `/gryphonframes debug` – toggle debug output (after a `/reload`, also the memory each module keeps)
 
 Modules add subcommands with `ns:RegisterCommand(name, handler, helpLines)`.
@@ -95,9 +100,10 @@ Modules add subcommands with `ns:RegisterCommand(name, handler, helpLines)`.
 ## Options
 
 All options live in `Modules/Options.lua` (Esc > Options > AddOns > GryphonFrames), loaded after
-the other modules. General options are on the main page; everything on nameplates goes into the
-"Nameplates" subcategory, one section per feature. Proxy settings read and write `ns.db` and `ns.charDb` through the getters and
-setters of the modules (e.g. `NameplateComboPoints:SetScale`), so a change takes effect right away.
+the other modules. General options are on the main page; everything on unit frames goes into the
+"Unit Frames" subcategory and everything on nameplates into "Nameplates", one section per feature.
+Proxy settings read and write `ns.db` and `ns.charDb` through the getters and setters of the
+modules (e.g. `NameplateComboPoints:SetScale`), so a change takes effect right away.
 Opening the page by command is blocked in combat.
 
 ## License
