@@ -15,9 +15,10 @@ local L = ns.L
 -- updated by a ticker every TIMER_INTERVAL seconds, and only while a shown buff has a duration.
 --
 -- Turned on per character in the options (Modules/Options.lua) or with "/gryphonframes buffs on"
--- (ns.charDb.playerBuffs). Position, icon size and icons per row are saved per Edit Mode layout in
--- ns.db.playerBuffs.layouts[layoutName] as { point, x, y, iconSize, perRow }. Without a point, the
--- row is attached below the power bar of the player frame.
+-- (ns.charDb.playerBuffs). Position, icon size, icons per row, alignment and sort order are saved
+-- per Edit Mode layout in ns.db.playerBuffs.layouts[layoutName] as
+-- { point, x, y, iconSize, perRow, alignment, sort, sortReversed }. Without a point, the row is
+-- attached below the power bar of the player frame.
 local PlayerBuffs = ns:RegisterModule("PlayerBuffs")
 
 local LibEditMode = LibStub("LibEditMode")
@@ -31,6 +32,13 @@ local TIMER_INTERVAL = 0.5
 local ATTACH_GAP = 4
 PlayerBuffs.DEFAULT_ICON_SIZE, PlayerBuffs.MIN_ICON_SIZE, PlayerBuffs.MAX_ICON_SIZE = 24, 12, 48
 PlayerBuffs.DEFAULT_PER_ROW, PlayerBuffs.MIN_PER_ROW, PlayerBuffs.MAX_PER_ROW = 8, 1, 16
+-- How the icons of a row are arranged: "left" (from left to right), "center" or "right" (from
+-- right to left).
+PlayerBuffs.DEFAULT_ALIGNMENT = "left"
+-- Order of the icons: "index" (the order of the game), "time" (shortest remaining time first),
+-- "duration" (shortest full duration first), "name" or "whitelist" (in the order of the whitelist,
+-- the other buffs after them). sortReversed in the layout turns the order around.
+PlayerBuffs.DEFAULT_SORT = "index"
 
 -- Position the frame has in LibEditMode. "Reset Position" in the Edit Mode dialog moves the frame
 -- exactly here, which the module takes as "attach to the player frame again" (see TargetCastBar).
@@ -73,19 +81,21 @@ local function IsDefaultPosition(point, x, y)
 end
 
 -- Lookup tables of the whitelist and blacklist, built from the entries in ns.charDb by
--- BuildLists(): { ids = { [spellId] = true }, names = { [lowercase name] = true } }.
+-- BuildLists(): { ids = { [spellId] = position }, names = { [lowercase name] = position } }, with
+-- the position of the first entry for it in the list (for the sort order "whitelist").
 local lists = {}
 
 -- An entry is a spell ID if it is a number, otherwise an aura name. Names match all ranks of a
 -- spell, but only in the language of the client.
 local function BuildList(entries)
     local list = { ids = {}, names = {} }
-    for _, entry in ipairs(entries) do
+    for position, entry in ipairs(entries) do
         local id = tonumber(entry)
         if id then
-            list.ids[id] = true
+            list.ids[id] = list.ids[id] or position
         else
-            list.names[tostring(entry):lower()] = true
+            local name = tostring(entry):lower()
+            list.names[name] = list.names[name] or position
         end
     end
     return list
@@ -96,12 +106,15 @@ local function BuildLists()
     lists.blacklist = BuildList(ns.charDb.playerBuffsBlacklist)
 end
 
-local function IsInList(list, auraData)
+-- Position of the first list entry that matches the buff, or nil.
+local function GetListPosition(list, auraData)
     local spellId, name = auraData.spellId, auraData.name
-    if spellId and not ns.Compat.IsSecret(spellId) and list.ids[spellId] then
-        return true
+    local idPosition = spellId and not ns.Compat.IsSecret(spellId) and list.ids[spellId]
+    local namePosition = name and not ns.Compat.IsSecret(name) and list.names[name:lower()]
+    if idPosition and namePosition then
+        return math.min(idPosition, namePosition)
     end
-    return name and not ns.Compat.IsSecret(name) and list.names[name:lower()] or false
+    return idPosition or namePosition or nil
 end
 
 -- Which buffs from the player are shown: never the ones on the blacklist, always the ones on the
@@ -110,10 +123,10 @@ end
 -- only up to the maximum duration (ns.charDb.playerBuffsMaxDuration in seconds, 0 = no limit). The
 -- maximum duration is the full duration of the buff, not the remaining time.
 local function ShouldShow(auraData)
-    if IsInList(lists.blacklist, auraData) then
+    if GetListPosition(lists.blacklist, auraData) then
         return false
     end
-    if IsInList(lists.whitelist, auraData) then
+    if GetListPosition(lists.whitelist, auraData) then
         return true
     end
     if ns.charDb.playerBuffsWhitelistOnly then
@@ -185,47 +198,128 @@ local function UpdateContainerSize(count)
     container:SetSize(perRow * (iconSize + SPACING) - SPACING, rows * (iconSize + TIMER_HEIGHT + SPACING) - SPACING)
 end
 
--- Shows the buffs from the player, in the order of the game. Reads C_UnitAuras directly instead of
--- AuraUtil.ForEachAura: in Edit Mode, Blizzard switches AuraUtil to example auras
--- (AURA_DATA_PROVIDER_SWITCH), which would stay in the row after Edit Mode until the next
--- UNIT_AURA.
+-- Places the shown icons in rows, aligned within the full width of a row (see UpdateContainerSize).
+local function LayoutButtons(count)
+    local iconSize = GetLayoutValue(nil, "iconSize", PlayerBuffs.DEFAULT_ICON_SIZE)
+    local perRow = GetLayoutValue(nil, "perRow", PlayerBuffs.DEFAULT_PER_ROW)
+    local alignment = GetLayoutValue(nil, "alignment", PlayerBuffs.DEFAULT_ALIGNMENT)
+    for i = 1, count do
+        local column, row = (i - 1) % perRow, math.floor((i - 1) / perRow)
+        if alignment == "right" then
+            column = perRow - 1 - column
+        elseif alignment == "center" then
+            local inRow = math.min(count - row * perRow, perRow)
+            column = column + (perRow - inRow) / 2
+        end
+        local button = buttons[i]
+        button:SetSize(iconSize, iconSize)
+        button:ClearAllPoints()
+        button:SetPoint("TOPLEFT", column * (iconSize + SPACING), -row * (iconSize + TIMER_HEIGHT + SPACING))
+    end
+end
+
+-- Value a buff is sorted by, or nil to put it after the others: the expiration time for "time"
+-- (the order by remaining time stays the same while the buffs run, so no resort is needed), the
+-- full duration for "duration", the lowercase name for "name" and the position in the whitelist for
+-- "whitelist". Buffs without a duration, buffs not on the whitelist and secret values have no sort
+-- value.
+local function GetSortValue(auraData, sort)
+    if sort == "time" then
+        local expirationTime = auraData.expirationTime
+        if expirationTime and not ns.Compat.IsSecret(expirationTime) and expirationTime > 0 then
+            return expirationTime
+        end
+    elseif sort == "duration" then
+        local duration = auraData.duration
+        if duration and not ns.Compat.IsSecret(duration) and duration > 0 then
+            return duration
+        end
+    elseif sort == "whitelist" then
+        return GetListPosition(lists.whitelist, auraData)
+    elseif sort == "name" then
+        local name = auraData.name
+        if name and not ns.Compat.IsSecret(name) then
+            return name:lower()
+        end
+    end
+end
+
+-- Shown buffs of the last update as { auraData, index, value }, reused to avoid garbage.
+local sorted = {}
+
+local function CompareSortValues(a, b)
+    if a.value and b.value and a.value ~= b.value then
+        return a.value < b.value
+    elseif (a.value == nil) ~= (b.value == nil) then
+        return a.value ~= nil
+    end
+    return a.index < b.index
+end
+
+-- Orders the shown buffs by sort value, buffs without one last. The game's order breaks ties, so
+-- the order is stable. Reversed turns the whole order around, so buffs without a sort value come
+-- first (e.g. buffs without a duration as the longest ones).
+local function SortAuras(count, sort, reversed)
+    if sort ~= PlayerBuffs.DEFAULT_SORT then
+        for i = 1, count do
+            sorted[i].value = GetSortValue(sorted[i].auraData, sort)
+        end
+        table.sort(sorted, CompareSortValues)
+    end
+    if reversed then
+        for i = 1, math.floor(count / 2) do
+            sorted[i], sorted[count + 1 - i] = sorted[count + 1 - i], sorted[i]
+        end
+    end
+end
+
+-- Shows the buffs from the player, in the order of the game or sorted (SortAuras). Reads
+-- C_UnitAuras directly instead of AuraUtil.ForEachAura: in Edit Mode, Blizzard switches AuraUtil to
+-- example auras (AURA_DATA_PROVIDER_SWITCH), which would stay in the row after Edit Mode until the
+-- next UNIT_AURA.
 local function UpdateAuras()
     wipe(shownIds)
     local count = 0
     local hasDuration = false
     if ns.charDb.playerBuffs then
-        local iconSize = GetLayoutValue(nil, "iconSize", PlayerBuffs.DEFAULT_ICON_SIZE)
-        local perRow = GetLayoutValue(nil, "perRow", PlayerBuffs.DEFAULT_PER_ROW)
         local index = 1
         local auraData = C_UnitAuras.GetAuraDataByIndex("player", index, FILTER)
         while auraData do
             if ShouldShow(auraData) then
                 count = count + 1
-                local button = buttons[count] or CreateButton()
-                buttons[count] = button
-                button.auraInstanceID = auraData.auraInstanceID
-                button.expirationTime = auraData.expirationTime
-                button.Icon:SetTexture(auraData.icon)
-                local applications = auraData.applications
-                button.Count:SetText((ns.Compat.IsSecret(applications) or applications > 1) and applications or "")
-                button:SetSize(iconSize, iconSize)
-                button:ClearAllPoints()
-                local column, row = (count - 1) % perRow, math.floor((count - 1) / perRow)
-                button:SetPoint("TOPLEFT", column * (iconSize + SPACING), -row * (iconSize + TIMER_HEIGHT + SPACING))
-                UpdateDuration(button)
-                button:Show()
-                shownIds[auraData.auraInstanceID] = true
-                if button.Duration:GetText() ~= "" then
-                    hasDuration = true
-                end
+                local entry = sorted[count] or {}
+                sorted[count] = entry
+                entry.auraData, entry.index = auraData, index
             end
             index = index + 1
             auraData = C_UnitAuras.GetAuraDataByIndex("player", index, FILTER)
+        end
+        for i = count + 1, #sorted do
+            sorted[i] = nil
+        end
+        SortAuras(count, GetLayoutValue(nil, "sort", PlayerBuffs.DEFAULT_SORT),
+            GetLayoutValue(nil, "sortReversed", false))
+        for i = 1, count do
+            auraData = sorted[i].auraData
+            local button = buttons[i] or CreateButton()
+            buttons[i] = button
+            button.auraInstanceID = auraData.auraInstanceID
+            button.expirationTime = auraData.expirationTime
+            button.Icon:SetTexture(auraData.icon)
+            local applications = auraData.applications
+            button.Count:SetText((ns.Compat.IsSecret(applications) or applications > 1) and applications or "")
+            UpdateDuration(button)
+            button:Show()
+            shownIds[auraData.auraInstanceID] = true
+            if button.Duration:GetText() ~= "" then
+                hasDuration = true
+            end
         end
     end
     for i = count + 1, #buttons do
         buttons[i]:Hide()
     end
+    LayoutButtons(count)
     UpdateContainerSize(count)
     SetTicker(hasDuration)
 end
@@ -349,6 +443,57 @@ local function RegisterEditMode()
             end,
             set = function(layoutName, value)
                 SetLayoutValue(layoutName, "perRow", value)
+                ApplyLayout()
+            end,
+        },
+        {
+            kind = LibEditMode.SettingType.Dropdown,
+            name = L["PLAYER_BUFFS_ALIGNMENT"],
+            default = PlayerBuffs.DEFAULT_ALIGNMENT,
+            values = {
+                { text = L["PLAYER_BUFFS_ALIGNMENT_LEFT"], value = "left" },
+                { text = L["PLAYER_BUFFS_ALIGNMENT_CENTER"], value = "center" },
+                { text = L["PLAYER_BUFFS_ALIGNMENT_RIGHT"], value = "right" },
+            },
+            get = function(layoutName)
+                return GetLayoutValue(layoutName, "alignment", PlayerBuffs.DEFAULT_ALIGNMENT)
+            end,
+            set = function(layoutName, value)
+                SetLayoutValue(layoutName, "alignment", value)
+                ApplyLayout()
+            end,
+        },
+        {
+            kind = LibEditMode.SettingType.Dropdown,
+            name = L["PLAYER_BUFFS_SORT"],
+            desc = L["PLAYER_BUFFS_SORT_DESC"],
+            default = PlayerBuffs.DEFAULT_SORT,
+            values = {
+                { text = L["PLAYER_BUFFS_SORT_INDEX"], value = "index" },
+                { text = L["PLAYER_BUFFS_SORT_TIME"], value = "time" },
+                { text = L["PLAYER_BUFFS_SORT_DURATION"], value = "duration" },
+                { text = L["PLAYER_BUFFS_SORT_NAME"], value = "name" },
+                { text = L["PLAYER_BUFFS_SORT_WHITELIST"], value = "whitelist" },
+            },
+            get = function(layoutName)
+                return GetLayoutValue(layoutName, "sort", PlayerBuffs.DEFAULT_SORT)
+            end,
+            set = function(layoutName, value)
+                SetLayoutValue(layoutName, "sort", value)
+                ApplyLayout()
+            end,
+        },
+        {
+            kind = LibEditMode.SettingType.Checkbox,
+            name = L["PLAYER_BUFFS_SORT_REVERSED"],
+            desc = L["PLAYER_BUFFS_SORT_REVERSED_DESC"],
+            default = false,
+            get = function(layoutName)
+                return GetLayoutValue(layoutName, "sortReversed", false)
+            end,
+            set = function(layoutName, value)
+                -- nil instead of false keeps the default out of the saved variables.
+                SetLayoutValue(layoutName, "sortReversed", value or nil)
                 ApplyLayout()
             end,
         },
