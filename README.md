@@ -17,7 +17,7 @@ Retail and MoP Classic are not supported.
 Copy (or symlink) the `GryphonFrames` folder into the AddOns folder of the client:
 
 ```
-World of Warcraft\_classic_beta_\Interface\AddOns\GryphonFrames   (Forever)
+World of Warcraft\_forever_\Interface\AddOns\GryphonFrames        (Forever)
 World of Warcraft\_classic_era_\Interface\AddOns\GryphonFrames    (Classic Era)
 World of Warcraft\_anniversary_\Interface\AddOns\GryphonFrames    (Anniversary)
 ```
