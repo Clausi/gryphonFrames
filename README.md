@@ -22,9 +22,6 @@ World of Warcraft\_classic_era_\Interface\AddOns\GryphonFrames    (Classic Era)
 World of Warcraft\_anniversary_\Interface\AddOns\GryphonFrames    (Anniversary)
 ```
 
-`.tools/deploy.cmd forever|era|anniversary|all` does this from the repo (run
-`.tools/fetch-libs.cmd` once before).
-
 ## Structure
 
 ```

@@ -19,12 +19,6 @@ what is specific to GryphonFrames.
 - All three clients have Blizzard's Edit Mode, so LibEditMode is used on all of them.
 - Features are usually one module per Blizzard frame.
 
-## Testing
-
-`.tools/deploy.cmd forever|era|anniversary|all` copies the addon into the AddOns folder of that
-client (default `all` installed clients; run `.tools/fetch-libs.cmd` once before).
-`.tools/deploy-forever.cmd` is a shortcut for `deploy.cmd forever`.
-
 ## Libraries
 
 - `.tools/fetch-libs.cmd` fetches the same library versions as the `externals` in `.pkgmeta`.
