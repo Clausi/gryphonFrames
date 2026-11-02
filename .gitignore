@@ -6,3 +6,6 @@ Libs/
 
 # Local media (screenshots, logos)
 .media/
+
+# Local Claude Code instructions (deploy scripts etc.)
+CLAUDE.local.md
