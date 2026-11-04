@@ -118,4 +118,5 @@ https://github.com/Clausi/gryphonMail). Never use `Ambiguate`.
   After that is merged, a pushed tag `vX.Y.Z` on `main` builds and uploads the release (see
   "Releasing" in `README.md`). Only tag when asked.
 - Keep the structure section in `README.md` up to date when files are added or removed.
-- Commit scopes are usually the module name in kebab-case, or `core`, `locales`, `toc`.
+- Commit scopes are usually the module name in kebab-case, or `core`, `locales`, `toc`, `claude`
+  (`CLAUDE.md`), `release`.
