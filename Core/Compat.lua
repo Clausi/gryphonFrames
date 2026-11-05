@@ -17,6 +17,14 @@ local hasAuraContainer = TargetFrame and TargetFrame.GetAuraContainer ~= nil
 -- Forever's code no longer uses.
 local hasComboPointAtlas = C_Texture.GetAtlasInfo("uf-roguecp-icon-red") ~= nil
 
+-- False on Forever: in combat, power values are secret and C_UnitAuras refuses to list auras for
+-- addon code, so PlayerBuffs and PlayerPowerTicks would show next to nothing there and are turned
+-- off. The Mainline target frame marks Forever, the only supported client with the restrictions:
+-- their API exists in the docs of all three clients, so it cannot tell them apart.
+function Compat.CanReadValuesInCombat()
+    return not hasAuraContainer
+end
+
 -- Default style of the nameplate combo points: what the client's own combo points look like.
 ns.charDefaults.nameplateComboPointsStyle = hasComboPointAtlas and "modern" or "classic"
 

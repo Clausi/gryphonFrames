@@ -255,10 +255,13 @@ local function RegisterSettings()
     local tooltips = Settings.RegisterVerticalLayoutSubcategory(category, L["OPTIONS_TOOLTIPS"])
     RegisterTooltipIds(tooltips)
 
-    local unitFrames = Settings.RegisterVerticalLayoutSubcategory(category, L["OPTIONS_UNIT_FRAMES"])
-    -- The "Player Frame" section starts in RegisterPowerTicks().
-    RegisterPowerTicks(unitFrames)
-    RegisterPlayerBuffs(unitFrames)
+    -- Both modules are turned off on Forever, which leaves this subcategory empty.
+    if ns.modules.PlayerPowerTicks and ns.modules.PlayerBuffs then
+        local unitFrames = Settings.RegisterVerticalLayoutSubcategory(category, L["OPTIONS_UNIT_FRAMES"])
+        -- The "Player Frame" section starts in RegisterPowerTicks().
+        RegisterPowerTicks(unitFrames)
+        RegisterPlayerBuffs(unitFrames)
+    end
 end
 
 function Options:OnInitialize()

@@ -21,6 +21,13 @@ local L = ns.L
 -- per Edit Mode layout in ns.db.playerBuffs.layouts[layoutName] as
 -- { point, x, y, iconSize, perRow, alignment, sort, sortReversed }. Without a point, the row is
 -- attached below the power bar of the player frame.
+--
+-- Turned off on Forever for now: the client does not list auras for addon code in combat, so buffs
+-- gained there would not show up.
+if not ns.Compat.CanReadValuesInCombat() then
+    return
+end
+
 local PlayerBuffs = ns:RegisterModule("PlayerBuffs")
 
 local LibEditMode = LibStub("LibEditMode")
