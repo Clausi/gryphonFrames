@@ -21,6 +21,8 @@ read_globals = {
     "floor",
     "strsplit",
     "strtrim",
+    "C_EventUtils",
+    "canaccesstable",
     "issecretvalue",
     "hooksecurefunc",
     "wipe",

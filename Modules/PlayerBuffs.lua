@@ -12,7 +12,9 @@ local L = ns.L
 --
 -- Updates: UNIT_AURA of the player (filtered by unit in the client) rebuilds the icons only if an
 -- aura from the player was added, or a shown aura changed or ran out. The client updates the
--- remaining time itself (ns.Compat.SetAuraDurationText), also when it is secret.
+-- remaining time itself (ns.Compat.SetAuraDurationText), also when it is secret. If the client
+-- refuses to hand out auras (addon restrictions on Forever), the row stays as it is and is rebuilt
+-- when the restriction ends.
 --
 -- Turned on per character in the options (Modules/Options.lua) or with "/gryphonframes buffs on"
 -- (ns.charDb.playerBuffs). Position, icon size, icons per row, alignment and sort order are saved
@@ -42,6 +44,8 @@ PlayerBuffs.DEFAULT_SORT = "index"
 -- Position the frame has in LibEditMode. "Reset Position" in the Edit Mode dialog moves the frame
 -- exactly here, which the module takes as "attach to the player frame again" (see TargetCastBar).
 local DEFAULT_POSITION = { point = "CENTER", x = 0, y = -200 }
+-- The lists in the update info of UNIT_AURA.
+local UPDATE_LISTS = { "addedAuras", "updatedAuraInstanceIDs", "removedAuraInstanceIDs" }
 
 local container
 local buttons = {}
@@ -254,33 +258,49 @@ local function SortAuras(count, sort, reversed)
     end
 end
 
--- Shows the buffs from the player, in the order of the game or sorted (SortAuras). Reads
--- C_UnitAuras directly instead of AuraUtil.ForEachAura: in Edit Mode, Blizzard switches AuraUtil to
--- example auras (AURA_DATA_PROVIDER_SWITCH), which would stay in the row after Edit Mode until the
--- next UNIT_AURA.
+-- True if UpdateAuras() could not read the auras and has to run again when a restriction ends.
+local updatePending = false
+
+-- Fills sorted with the buffs to show and returns their number, or nil if the client refuses to
+-- hand out the auras. Reads C_UnitAuras directly instead of AuraUtil.ForEachAura: in Edit Mode,
+-- Blizzard switches AuraUtil to example auras (AURA_DATA_PROVIDER_SWITCH), which would stay in the
+-- row after Edit Mode until the next UNIT_AURA.
+local function ReadAuras()
+    local count, index = 0, 1
+    local readable, auraData = ns.Compat.TryGetAuraDataByIndex("player", index, FILTER)
+    while readable and auraData do
+        if ShouldShow(auraData) then
+            count = count + 1
+            local entry = sorted[count] or {}
+            sorted[count] = entry
+            entry.auraData, entry.index = auraData, index
+        end
+        index = index + 1
+        readable, auraData = ns.Compat.TryGetAuraDataByIndex("player", index, FILTER)
+    end
+    if not readable then
+        return nil
+    end
+    for i = count + 1, #sorted do
+        sorted[i] = nil
+    end
+    return count
+end
+
+-- Shows the buffs from the player, in the order of the game or sorted (SortAuras).
 local function UpdateAuras()
+    local count = ns.charDb.playerBuffs and ReadAuras()
+    updatePending = count == nil
+    if updatePending then
+        return
+    end
+    count = count or 0
     wipe(shownIds)
-    local count = 0
-    if ns.charDb.playerBuffs then
-        local index = 1
-        local auraData = C_UnitAuras.GetAuraDataByIndex("player", index, FILTER)
-        while auraData do
-            if ShouldShow(auraData) then
-                count = count + 1
-                local entry = sorted[count] or {}
-                sorted[count] = entry
-                entry.auraData, entry.index = auraData, index
-            end
-            index = index + 1
-            auraData = C_UnitAuras.GetAuraDataByIndex("player", index, FILTER)
-        end
-        for i = count + 1, #sorted do
-            sorted[i] = nil
-        end
+    if count > 0 then
         SortAuras(count, GetLayoutValue(nil, "sort", PlayerBuffs.DEFAULT_SORT),
             GetLayoutValue(nil, "sortReversed", false))
         for i = 1, count do
-            auraData = sorted[i].auraData
+            local auraData = sorted[i].auraData
             local button = buttons[i] or CreateButton()
             buttons[i] = button
             button.auraInstanceID = auraData.auraInstanceID
@@ -302,17 +322,31 @@ local function UpdateAuras()
     UpdateContainerSize(count)
 end
 
+-- True if a part of the update cannot be read (combat restrictions).
+local function HasHiddenFields(updateInfo)
+    if ns.Compat.IsSecret(updateInfo.isFullUpdate) then
+        return true
+    end
+    for _, key in ipairs(UPDATE_LISTS) do
+        local list = updateInfo[key]
+        if ns.Compat.IsSecret(list) or (list and not ns.Compat.IsReadableTable(list)) then
+            return true
+        end
+    end
+    return false
+end
+
 -- Whether a UNIT_AURA update can change the shown buffs: a full update, a new aura from the
--- player, or a shown aura that changed or ran out.
+-- player, or a shown aura that changed or ran out. What cannot be read may be any of these, so it
+-- updates too.
 local function IsRelevantUpdate(updateInfo)
-    if not updateInfo or updateInfo.isFullUpdate then
+    if not ns.Compat.IsReadableTable(updateInfo) or HasHiddenFields(updateInfo) or updateInfo.isFullUpdate then
         return true
     end
     for _, auraData in ipairs(updateInfo.addedAuras or {}) do
-        -- A hidden source may be the player, so it updates too.
-        local sourceUnit = auraData.sourceUnit
-        if ns.Compat.IsSecret(sourceUnit)
-                or (auraData.isHelpful and sourceUnit and UnitIsUnit(sourceUnit, "player")) then
+        local sourceUnit, isHelpful = auraData.sourceUnit, auraData.isHelpful
+        if ns.Compat.IsSecret(sourceUnit) or ns.Compat.IsSecret(isHelpful)
+                or (isHelpful and sourceUnit and UnitIsUnit(sourceUnit, "player")) then
             return true
         end
     end
@@ -588,6 +622,11 @@ function PlayerBuffs:OnEnable()
     RegisterEditMode()
     ns:RegisterUnitEvent("UNIT_AURA", "player", function(_, _, updateInfo)
         if IsRelevantUpdate(updateInfo) then
+            UpdateAuras()
+        end
+    end)
+    ns.Compat.OnAddOnRestrictionChanged(function()
+        if updatePending then
             UpdateAuras()
         end
     end)

@@ -25,6 +25,31 @@ function Compat.IsSecret(value)
     return issecretvalue ~= nil and issecretvalue(value)
 end
 
+-- True if the value is a table whose fields addon code may read. Clients without secret values have
+-- no canaccesstable.
+function Compat.IsReadableTable(value)
+    if Compat.IsSecret(value) or type(value) ~= "table" then
+        return false
+    end
+    return canaccesstable == nil or canaccesstable(value)
+end
+
+-- Returns true and the aura data (nil past the last aura), or false if the client refuses to hand
+-- it out. During addon restrictions on Forever, C_UnitAuras.GetAuraDataByIndex() may return secret
+-- fields or raise "Auras cannot be accessed when secret" for addon code. The API docs do not say
+-- when it does which (RequiresUnitAuraAccess), and C_Secrets.ShouldAurasBeSecret() cannot tell the
+-- two apart, so the call is protected instead of checked up front.
+function Compat.TryGetAuraDataByIndex(unit, index, filter)
+    return pcall(C_UnitAuras.GetAuraDataByIndex, unit, index, filter)
+end
+
+-- Calls callback when an addon restriction starts or ends; it fires after a restriction ended.
+function Compat.OnAddOnRestrictionChanged(callback)
+    if C_EventUtils.IsEventValid("ADDON_RESTRICTION_STATE_CHANGED") then
+        ns:RegisterEvent("ADDON_RESTRICTION_STATE_CHANGED", callback)
+    end
+end
+
 -- Stack count of an aura as text, empty below 2 stacks. A secret count (combat restrictions)
 -- cannot be compared: C_UnitAuras.GetAuraApplicationDisplayCount() formats it in the client. In
 -- the API docs of all three clients; without it, the secret count is shown as it is. Like most aura
