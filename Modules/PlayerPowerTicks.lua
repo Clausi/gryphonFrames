@@ -25,6 +25,13 @@ local L = ns.L
 -- "/gryphonframes energy on" and "/gryphonframes mana on" (ns.charDb.playerEnergyTicks,
 -- ns.charDb.playerManaTicks). The power bar comes from PlayerFrame_GetManaBar(), which all
 -- supported clients have.
+--
+-- Turned off on Forever for now: without readable power values in combat there is no five second
+-- rule, and the spark does not start.
+if not ns.Compat.CanReadValuesInCombat() then
+    return
+end
+
 local PlayerPowerTicks = ns:RegisterModule("PlayerPowerTicks")
 
 local TICK_INTERVAL = 2

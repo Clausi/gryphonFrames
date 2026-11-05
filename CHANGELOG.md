@@ -24,14 +24,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   by default).
 - Mana ticks and the five second rule on the player frame: after a mana spend, a red spark runs
   from right to left for the 5 seconds without mana regeneration, then the spark shows the mana
-  ticks (`/gryphonframes mana on|off`, per character, off by default).
+  ticks (`/gryphonframes mana on|off`, per character, off by default). Energy and mana ticks are
+  only available on Classic Era and Anniversary for now: WoW Forever hides power values from addons
+  in combat.
 - Own buffs at the player frame: all buffs you cast, with stacks, remaining time and tooltip
   (`/gryphonframes buffs on|off`, per character, off by default). Below the power bar of the
   player frame, or anywhere in Edit Mode, with icon size, icons per row, alignment (left to right,
   centered or right to left) and sort order (default, remaining time, full duration, name or
-  whitelist order, optionally reversed) per layout. On WoW Forever, stacks and remaining time are
-  also shown while the game hides aura details from addons (combat restrictions); "Only Whitelist
-  Buffs" then shows all own buffs, since the whitelist cannot be matched.
+  whitelist order, optionally reversed) per layout. Only available on Classic Era and Anniversary
+  for now: WoW Forever hides auras from addons in combat.
 - Own buffs: a maximum duration hides long buffs, an option hides buffs without a duration
   (forms, auras, aspects), a whitelist always shows buffs and a blacklist hides them, by spell ID
   or aura name, and an option shows only the whitelist (per character, in the options).
