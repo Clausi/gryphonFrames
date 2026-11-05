@@ -199,13 +199,16 @@ local function RegisterPlayerBuffs(unitFrames)
 
     -- The lists are edited in ns.ListEditor, one spell ID or aura name per line.
     local layout = SettingsPanel:GetLayout(unitFrames)
+    -- No search tags (addSearchTags = false): tags added from addon code taint the initializer,
+    -- and the settings search carries that taint on to its results. On Forever, showing a Discord
+    -- row there then calls the protected C_Discord.IsUserOAuthed.
     for _, kind in ipairs({ "whitelist", "blacklist" }) do
         local key = "OPTIONS_PLAYER_BUFFS_" .. kind:upper()
         layout:AddInitializer(CreateSettingsButtonInitializer(L[key], L["OPTIONS_PLAYER_BUFFS_EDIT"], function()
             ns.ListEditor:Open(L[key], L[key .. "_DESC"], PlayerBuffs:GetList(kind), function(entries)
                 PlayerBuffs:SetList(kind, entries)
             end)
-        end, L[key .. "_TOOLTIP"], true))
+        end, L[key .. "_TOOLTIP"], false))
     end
 end
 
