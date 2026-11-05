@@ -14,6 +14,10 @@ local L = ns.L
 -- Tap) do not move it; only two such gains 2 seconds apart (the rhythm really shifted) do. Every
 -- loss of mana counts as a spend, also mana drained by enemies.
 --
+-- On Forever, power values are secret during addon restrictions such as combat, so they cannot be
+-- compared there. The spark then keeps the known rhythm, but gains and spends go unnoticed: no
+-- rhythm shift, no five second rule, no hiding at full mana until the values are readable again.
+--
 -- The spark moves by a translation animation, so no Lua runs per frame. Lua only runs on power
 -- events of the player, on form changes and when a setting changes.
 --
@@ -70,8 +74,19 @@ local function IsInRule(tracker, now)
     return tracker.ruleEnd and now < tracker.ruleEnd
 end
 
+-- The current power, nil while it is secret.
+local function GetPower(tracker)
+    local value = UnitPower("player", tracker.powerType)
+    if not ns.Compat.IsSecret(value) then
+        return value
+    end
+end
+
+-- Counts as not full while the values are secret, so the spark keeps running.
 local function IsFull(tracker)
-    return UnitPower("player", tracker.powerType) >= UnitPowerMax("player", tracker.powerType)
+    local value = GetPower(tracker)
+    local maxValue = UnitPowerMax("player", tracker.powerType)
+    return value ~= nil and not ns.Compat.IsSecret(maxValue) and value >= maxValue
 end
 
 -- Seconds between time and the nearest tick of the rhythm that started at startTime.
@@ -161,9 +176,11 @@ local function OnSpend(tracker, now)
     end
 end
 
+-- tracker.last is nil while the power is secret, so a value from before the restriction is never
+-- compared with one after it.
 local function OnPowerChanged(tracker)
-    local value = UnitPower("player", tracker.powerType)
-    if tracker.last then
+    local value = GetPower(tracker)
+    if value and tracker.last then
         local now = GetTime()
         if value > tracker.last then
             OnGain(tracker, now)
@@ -190,6 +207,18 @@ local function Refresh()
         end)
     else
         StartAtNextTick(tracker)
+    end
+end
+
+-- No power event fires at full power, so after combat the values are read again here: the next
+-- spend needs a value to compare with, and the spark may have run on while mana filled up.
+local function OnCombatEnded()
+    for _, tracker in pairs(trackers) do
+        tracker.last = GetPower(tracker)
+    end
+    local tracker = GetActiveTracker()
+    if tracker and tracker.hideWhenFull and IsFull(tracker) then
+        Hide()
     end
 end
 
@@ -251,7 +280,7 @@ function PlayerPowerTicks:OnEnable()
     end)
 
     for _, tracker in pairs(trackers) do
-        tracker.last = UnitPower("player", tracker.powerType)
+        tracker.last = GetPower(tracker)
     end
 
     ns:RegisterUnitEvent("UNIT_POWER_FREQUENT", "player", function(_, _, powerToken)
@@ -262,6 +291,7 @@ function PlayerPowerTicks:OnEnable()
     end)
     -- Druid forms change the power type shown in the player frame.
     ns:RegisterUnitEvent("UNIT_DISPLAYPOWER", "player", Refresh)
+    ns:RegisterEvent("PLAYER_REGEN_ENABLED", OnCombatEnded)
 
     Refresh()
 end
