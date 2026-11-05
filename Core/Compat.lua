@@ -18,8 +18,8 @@ local hasAuraContainer = TargetFrame and TargetFrame.GetAuraContainer ~= nil
 local hasComboPointAtlas = C_Texture.GetAtlasInfo("uf-roguecp-icon-red") ~= nil
 
 -- False on Forever: in combat, power values are secret and C_UnitAuras refuses to list auras for
--- addon code, so PlayerBuffs and PlayerPowerTicks would show next to nothing there and are turned
--- off. The Mainline target frame marks Forever, the only supported client with the restrictions:
+-- addon code, so PlayerBuffs is turned off there and PlayerPowerTicks only shows the five second
+-- rule. The Mainline target frame marks Forever, the only supported client with the restrictions:
 -- their API exists in the docs of all three clients, so it cannot tell them apart.
 function Compat.CanReadValuesInCombat()
     return not hasAuraContainer
@@ -49,6 +49,30 @@ end
 -- two apart, so the call is protected instead of checked up front.
 function Compat.TryGetAuraDataByIndex(unit, index, filter)
     return pcall(C_UnitAuras.GetAuraDataByIndex, unit, index, filter)
+end
+
+-- True if the spell costs mana. For the spell of a cast event on Forever: the event may carry secret
+-- values (SecretWhenUnitSpellCastRestricted), and C_Spell.GetSpellPowerCost() takes them from addon
+-- code. A cost that cannot be read counts as mana, so the five second rule still starts: nearly
+-- every spell of a mana user costs mana.
+function Compat.SpellCostsMana(spellId)
+    local costs = C_Spell.GetSpellPowerCost(spellId)
+    if not Compat.IsSecret(costs) and not costs then
+        return false
+    end
+    if not Compat.IsReadableTable(costs) then
+        return true
+    end
+    for _, cost in ipairs(costs) do
+        if not Compat.IsReadableTable(cost) or Compat.IsSecret(cost.type) or Compat.IsSecret(cost.cost)
+                or Compat.IsSecret(cost.minCost) then
+            return true
+        end
+        if cost.type == Enum.PowerType.Mana and (cost.cost > 0 or cost.minCost > 0) then
+            return true
+        end
+    end
+    return false
 end
 
 -- Calls callback when an addon restriction starts or ends; it fires after a restriction ended.

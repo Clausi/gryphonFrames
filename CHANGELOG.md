@@ -26,7 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   from right to left for the 5 seconds without mana regeneration, then the spark shows the mana
   ticks (`/gryphonframes mana on|off`, per character, off by default). Energy and mana ticks are
   only available on Classic Era and Anniversary for now: WoW Forever hides power values from addons
-  in combat.
+  in combat. On WoW Forever, the five second rule is shown on its own and starts with every cast of
+  a spell that costs mana, also a free one (Clearcasting).
 - Own buffs at the player frame: all buffs you cast, with stacks, remaining time and tooltip
   (`/gryphonframes buffs on|off`, per character, off by default). Below the power bar of the
   player frame, or anywhere in Edit Mode, with icon size, icons per row, alignment (left to right,

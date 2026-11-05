@@ -14,25 +14,23 @@ local L = ns.L
 -- Tap) do not move it; only two such gains 2 seconds apart (the rhythm really shifted) do. Every
 -- loss of mana counts as a spend, also mana drained by enemies.
 --
--- On Forever, power values are secret during addon restrictions such as combat, so they cannot be
--- compared there. The spark then keeps the known rhythm, but gains and spends go unnoticed: no
--- rhythm shift, no five second rule, no hiding at full mana until the values are readable again.
+-- On Forever, power values are secret in combat, so gains and spends cannot be seen there. The
+-- module only shows the five second rule on Forever, without reading power: every successful cast
+-- of a spell that costs mana starts it. Free casts (Clearcasting) start it as well, mana drained by
+-- enemies does not. Energy ticks and the mana tick spark are not available there.
 --
 -- The spark moves by a translation animation, so no Lua runs per frame. Lua only runs on power
--- events of the player, on form changes and when a setting changes.
+-- events of the player (on Forever on spell casts), on form changes and when a setting changes.
 --
 -- Turned on per character and power type in the options (Modules/Options.lua) or with
 -- "/gryphonframes energy on" and "/gryphonframes mana on" (ns.charDb.playerEnergyTicks,
 -- ns.charDb.playerManaTicks). The power bar comes from PlayerFrame_GetManaBar(), which all
 -- supported clients have.
---
--- Turned off on Forever for now: without readable power values in combat there is no five second
--- rule, and the spark does not start.
-if not ns.Compat.CanReadValuesInCombat() then
-    return
-end
 
 local PlayerPowerTicks = ns:RegisterModule("PlayerPowerTicks")
+
+-- False on Forever, see above.
+PlayerPowerTicks.HAS_TICKS = ns.Compat.CanReadValuesInCombat()
 
 local TICK_INTERVAL = 2
 local FIVE_SECOND_RULE = 5
@@ -40,7 +38,8 @@ local FIVE_SECOND_RULE = 5
 local TOLERANCE = 0.3
 local SPARK_TEXTURE = "Interface\\CastingBar\\UI-CastingBar-Spark"
 local SPARK_WIDTH = 16
-local RULE_COLOR = { 1, 0.5, 0.5 }
+local RULE_WIDTH = 2
+local RULE_COLOR = { 1, 0.1, 0.1, 0.75 }
 
 -- One tracker per power type, keyed by the power token of UNIT_POWER_FREQUENT. tickTime is the time
 -- of the last known tick (nil until the first gain), candidateTime a gain outside the rhythm that
@@ -54,6 +53,8 @@ local trackers = {
 }
 
 local spark, sparkFrame, animation, translation
+-- Last readable size of the power bar.
+local barWidth, barHeight
 -- Counts the timers; only the latest one runs, a new one or Hide() cancels the others.
 local timerId = 0
 
@@ -81,19 +82,17 @@ local function IsInRule(tracker, now)
     return tracker.ruleEnd and now < tracker.ruleEnd
 end
 
--- The current power, nil while it is secret.
-local function GetPower(tracker)
-    local value = UnitPower("player", tracker.powerType)
-    if not ns.Compat.IsSecret(value) then
-        return value
-    end
+local function IsFull(tracker)
+    return UnitPower("player", tracker.powerType) >= UnitPowerMax("player", tracker.powerType)
 end
 
--- Counts as not full while the values are secret, so the spark keeps running.
-local function IsFull(tracker)
-    local value = GetPower(tracker)
-    local maxValue = UnitPowerMax("player", tracker.powerType)
-    return value ~= nil and not ns.Compat.IsSecret(maxValue) and value >= maxValue
+-- Frame sizes may be secret on Forever, where the five second rule starts in combat. The size from
+-- before that is kept then; the power bar does not change its size in combat.
+local function UpdateBarSize(bar)
+    local width, height = bar:GetWidth(), bar:GetHeight()
+    if not ns.Compat.IsSecret(width) and not ns.Compat.IsSecret(height) then
+        barWidth, barHeight = width, height
+    end
 end
 
 -- Seconds between time and the nearest tick of the rhythm that started at startTime.
@@ -118,19 +117,32 @@ local function Play(duration, looping, color, reverse)
     if not bar then
         return
     end
+    UpdateBarSize(bar)
+    if not barWidth then
+        return
+    end
     if sparkFrame:GetParent() ~= bar then
         sparkFrame:SetParent(bar)
         sparkFrame:SetAllPoints(bar)
     end
     sparkFrame:SetFrameLevel(bar:GetFrameLevel() + 2)
-    spark:SetHeight(bar:GetHeight() * 2)
-    spark:SetVertexColor(color and color[1] or 1, color and color[2] or 1, color and color[3] or 1)
+    -- The spark texture needs additive blending, it has a black background (checked in-game). That
+    -- adds the blue of the mana bar to a tint and turns red into pink, so a tinted spark is a line.
+    if color then
+        spark:SetColorTexture(color[1], color[2], color[3], color[4])
+        spark:SetBlendMode("BLEND")
+        spark:SetSize(RULE_WIDTH, barHeight - 1)
+    else
+        spark:SetTexture(SPARK_TEXTURE)
+        spark:SetBlendMode("ADD")
+        spark:SetSize(SPARK_WIDTH, barHeight * 2)
+    end
     animation:Stop()
     spark:ClearAllPoints()
     spark:SetPoint("CENTER", sparkFrame, reverse and "RIGHT" or "LEFT")
     animation:SetLooping(looping and "REPEAT" or "NONE")
     translation:SetDuration(duration)
-    translation:SetOffset(reverse and -bar:GetWidth() or bar:GetWidth(), 0)
+    translation:SetOffset(reverse and -barWidth or barWidth, 0)
     sparkFrame:Show()
     animation:Play()
 end
@@ -183,19 +195,22 @@ local function OnSpend(tracker, now)
     end
 end
 
--- tracker.last is nil while the power is secret, so a value from before the restriction is never
--- compared with one after it.
 local function OnPowerChanged(tracker)
-    local value = GetPower(tracker)
-    if value and tracker.last then
-        local now = GetTime()
-        if value > tracker.last then
-            OnGain(tracker, now)
-        elseif value < tracker.last and tracker.fiveSecondRule then
-            OnSpend(tracker, now)
-        end
+    local value = UnitPower("player", tracker.powerType)
+    local now = GetTime()
+    if value > tracker.last then
+        OnGain(tracker, now)
+    elseif value < tracker.last and tracker.fiveSecondRule then
+        OnSpend(tracker, now)
     end
     tracker.last = value
+end
+
+-- Forever only, where power cannot be read: the cast stands in for the spend.
+local function OnSpellCast(_, _, _, spellId)
+    if ns.Compat.SpellCostsMana(spellId) then
+        OnSpend(trackers.MANA, GetTime())
+    end
 end
 
 -- Shows or hides the spark after a form change or a setting change. The rhythm and the five
@@ -203,6 +218,10 @@ end
 -- rule or at the next tick.
 local function Refresh()
     Hide()
+    local bar = PlayerFrame_GetManaBar()
+    if bar then
+        UpdateBarSize(bar)
+    end
     local tracker = GetActiveTracker()
     if not tracker then
         return
@@ -214,18 +233,6 @@ local function Refresh()
         end)
     else
         StartAtNextTick(tracker)
-    end
-end
-
--- No power event fires at full power, so after combat the values are read again here: the next
--- spend needs a value to compare with, and the spark may have run on while mana filled up.
-local function OnCombatEnded()
-    for _, tracker in pairs(trackers) do
-        tracker.last = GetPower(tracker)
-    end
-    local tracker = GetActiveTracker()
-    if tracker and tracker.hideWhenFull and IsFull(tracker) then
-        Hide()
     end
 end
 
@@ -266,18 +273,20 @@ local function RegisterToggleCommand(name, help, onText, offText, isEnabled, set
     end, { help })
 end
 
-RegisterToggleCommand("energy", L["HELP_ENERGY"], L["ENERGY_ON"], L["ENERGY_OFF"],
-    PlayerPowerTicks.IsEnergyEnabled, PlayerPowerTicks.SetEnergyEnabled)
-RegisterToggleCommand("mana", L["HELP_MANA"], L["MANA_ON"], L["MANA_OFF"],
-    PlayerPowerTicks.IsManaEnabled, PlayerPowerTicks.SetManaEnabled)
+if PlayerPowerTicks.HAS_TICKS then
+    RegisterToggleCommand("energy", L["HELP_ENERGY"], L["ENERGY_ON"], L["ENERGY_OFF"],
+        PlayerPowerTicks.IsEnergyEnabled, PlayerPowerTicks.SetEnergyEnabled)
+    RegisterToggleCommand("mana", L["HELP_MANA"], L["MANA_ON"], L["MANA_OFF"],
+        PlayerPowerTicks.IsManaEnabled, PlayerPowerTicks.SetManaEnabled)
+else
+    RegisterToggleCommand("mana", L["HELP_MANA_RULE"], L["MANA_RULE_ON"], L["MANA_RULE_OFF"],
+        PlayerPowerTicks.IsManaEnabled, PlayerPowerTicks.SetManaEnabled)
+end
 
 function PlayerPowerTicks:OnEnable()
     sparkFrame = CreateFrame("Frame", nil, UIParent)
     sparkFrame:Hide()
     spark = sparkFrame:CreateTexture(nil, "OVERLAY")
-    spark:SetTexture(SPARK_TEXTURE)
-    spark:SetBlendMode("ADD")
-    spark:SetWidth(SPARK_WIDTH)
 
     animation = spark:CreateAnimationGroup()
     translation = animation:CreateAnimation("Translation")
@@ -286,19 +295,21 @@ function PlayerPowerTicks:OnEnable()
         sparkFrame:Hide()
     end)
 
-    for _, tracker in pairs(trackers) do
-        tracker.last = GetPower(tracker)
-    end
-
-    ns:RegisterUnitEvent("UNIT_POWER_FREQUENT", "player", function(_, _, powerToken)
-        local tracker = trackers[powerToken]
-        if tracker then
-            OnPowerChanged(tracker)
+    if self.HAS_TICKS then
+        for _, tracker in pairs(trackers) do
+            tracker.last = UnitPower("player", tracker.powerType)
         end
-    end)
+        ns:RegisterUnitEvent("UNIT_POWER_FREQUENT", "player", function(_, _, powerToken)
+            local tracker = trackers[powerToken]
+            if tracker then
+                OnPowerChanged(tracker)
+            end
+        end)
+    else
+        ns:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player", OnSpellCast)
+    end
     -- Druid forms change the power type shown in the player frame.
     ns:RegisterUnitEvent("UNIT_DISPLAYPOWER", "player", Refresh)
-    ns:RegisterEvent("PLAYER_REGEN_ENABLED", OnCombatEnded)
 
     Refresh()
 end
