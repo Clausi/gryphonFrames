@@ -35,6 +35,7 @@ read_globals = {
     "C_AddOns",
     "C_DurationUtil",
     "C_NamePlate",
+    "C_Spell",
     "C_StringUtil",
     "C_Texture",
     "C_Timer",

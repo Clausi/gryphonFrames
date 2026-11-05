@@ -92,7 +92,7 @@ Lint with [luacheck](https://github.com/lunarmodules/luacheck). Place `luacheck.
 - `/gryphonframes energy on|off` – show energy ticks on the player frame for the current character,
   default off (not on WoW Forever)
 - `/gryphonframes mana on|off` – show mana ticks and the five second rule on the player frame for
-  the current character, default off (not on WoW Forever)
+  the current character, default off (on WoW Forever only the five second rule)
 - `/gryphonframes buffs on|off` – show your own buffs at the player frame for the current character,
   default off, position, icon size and icons per row in Edit Mode (not on WoW Forever)
 - `/gryphonframes spellids on|off` – show spell IDs in tooltips (spells, buffs, debuffs) for the

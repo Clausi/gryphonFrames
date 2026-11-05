@@ -115,25 +115,29 @@ local function RegisterPowerTicks(unitFrames)
     local layout = SettingsPanel:GetLayout(unitFrames)
     layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(L["OPTIONS_PLAYER_FRAME_HEADER"]))
 
-    local energy = RegisterProxySetting(unitFrames, "ENERGY_TICKS", Settings.VarType.Boolean,
-        L["OPTIONS_ENERGY_TICKS"], ns.charDefaults.playerEnergyTicks,
-        function()
-            return PlayerPowerTicks:IsEnergyEnabled()
-        end,
-        function(value)
-            PlayerPowerTicks:SetEnergyEnabled(value)
-        end)
-    Settings.CreateCheckbox(unitFrames, energy, L["OPTIONS_ENERGY_TICKS_TOOLTIP"])
+    if PlayerPowerTicks.HAS_TICKS then
+        local energy = RegisterProxySetting(unitFrames, "ENERGY_TICKS", Settings.VarType.Boolean,
+            L["OPTIONS_ENERGY_TICKS"], ns.charDefaults.playerEnergyTicks,
+            function()
+                return PlayerPowerTicks:IsEnergyEnabled()
+            end,
+            function(value)
+                PlayerPowerTicks:SetEnergyEnabled(value)
+            end)
+        Settings.CreateCheckbox(unitFrames, energy, L["OPTIONS_ENERGY_TICKS_TOOLTIP"])
+    end
 
+    -- Without ticks (Forever), the same setting only stands for the five second rule.
+    local manaKey = PlayerPowerTicks.HAS_TICKS and "OPTIONS_MANA_TICKS" or "OPTIONS_MANA_RULE"
     local mana = RegisterProxySetting(unitFrames, "MANA_TICKS", Settings.VarType.Boolean,
-        L["OPTIONS_MANA_TICKS"], ns.charDefaults.playerManaTicks,
+        L[manaKey], ns.charDefaults.playerManaTicks,
         function()
             return PlayerPowerTicks:IsManaEnabled()
         end,
         function(value)
             PlayerPowerTicks:SetManaEnabled(value)
         end)
-    Settings.CreateCheckbox(unitFrames, mana, L["OPTIONS_MANA_TICKS_TOOLTIP"])
+    Settings.CreateCheckbox(unitFrames, mana, L[manaKey .. "_TOOLTIP"])
 end
 
 -- Own buffs at the player frame (Modules/PlayerBuffs.lua). Position and size are in Edit Mode.
@@ -255,11 +259,11 @@ local function RegisterSettings()
     local tooltips = Settings.RegisterVerticalLayoutSubcategory(category, L["OPTIONS_TOOLTIPS"])
     RegisterTooltipIds(tooltips)
 
-    -- Both modules are turned off on Forever, which leaves this subcategory empty.
-    if ns.modules.PlayerPowerTicks and ns.modules.PlayerBuffs then
-        local unitFrames = Settings.RegisterVerticalLayoutSubcategory(category, L["OPTIONS_UNIT_FRAMES"])
-        -- The "Player Frame" section starts in RegisterPowerTicks().
-        RegisterPowerTicks(unitFrames)
+    local unitFrames = Settings.RegisterVerticalLayoutSubcategory(category, L["OPTIONS_UNIT_FRAMES"])
+    -- The "Player Frame" section starts in RegisterPowerTicks().
+    RegisterPowerTicks(unitFrames)
+    -- Turned off on Forever.
+    if ns.modules.PlayerBuffs then
         RegisterPlayerBuffs(unitFrames)
     end
 end
