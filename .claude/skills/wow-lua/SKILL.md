@@ -69,6 +69,12 @@ locales, libraries and module-specific rules, and wins where it differs.
   `ChatFrame_AddMessageEventFilter` over replacing Blizzard functions, methods or scripts (e.g. a
   chat frame's `AddMessage`), to avoid taint.
 - Keep writes to Blizzard frames minimal and document why, in the code and in `.luacheckrc`.
+- Calling a Blizzard function can taint Blizzard's state too: code that fills a cache or list on
+  first use (e.g. `ContainerFrameUtil_EnumerateContainerFrames`) stores it as tainted when an addon
+  makes that first call, for example at login. Blizzard's code that reads it later is tainted as
+  well, and an unrelated protected call fails with `ADDON_ACTION_FORBIDDEN` blaming the addon. Read
+  the source of such helpers; prefer reading the frames directly (e.g.
+  `ContainerFrameContainer.ContainerFrames`).
 - Many frames are protected or secure (unit frames, action bars, ...). Do not move, show, hide or
   resize them in combat (`InCombatLockdown()`); defer such changes to `PLAYER_REGEN_ENABLED`.
 - Own frames must not go through Blizzard's panel manager (`ShowUIPanel`, `HideUIPanel`,
