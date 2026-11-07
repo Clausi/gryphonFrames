@@ -109,8 +109,11 @@ https://github.com/Clausi/gryphonMail). Never use `Ambiguate`.
 - **Forever:** names are "First Surname" (separator from
   `Constants.CharacterNameSeparatorConsts.CHARACTERNAME_SURNAME_SEPARATOR`, a space) and carry no
   realm suffix. `UnitName(unit)` returns first name and **surname**, not name and realm. Each
-  ruleset (PvE, PvP, RP) is its own realm, e.g. `GetRealmName()` = "Classic Beta PvE". A full name
-  is unique across rulesets.
+  ruleset (PvE, PvP, RP, RP PvP) is a mega server made up of many realms, so characters of one
+  ruleset can be on different realms: `GetRealmName()` = "CAMWOW EU4 Realm 3 PvE". Never compare
+  realm names to decide whether two characters share a ruleset. No in-game API returns the ruleset,
+  read it from the realm name (`GetRulesetName` in GryphonMail's `Modules/Characters.lua`). A full
+  name is unique across rulesets.
 - **Classic Era, Anniversary, MoP Classic, Retail:** names are "Name-Realm" with the realm from
   `GetNormalizedRealmName()` (no spaces). Chat events usually include the sender's realm; other APIs
   leave it out for the own realm. `Names.Normalize` fills in the own realm for comparing;
