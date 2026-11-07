@@ -1,4 +1,4 @@
-## Interface: 16001, 11509, 20506
+## Interface: 16001
 ## Title: GryphonFrames
 ## Notes: Improves the default Blizzard frames.
 ## Notes-deDE: Verbessert die Standard-Fenster von Blizzard.
@@ -21,15 +21,12 @@ Locales\deDE.lua
 
 # Core
 Core\Init.lua
-Core\Compat.lua
 Core\Util.lua
-Core\ListEditor.lua
 
 # Modules
 Modules\TargetCastBar.lua
 Modules\NameplateComboPoints.lua
 Modules\PlayerPowerTicks.lua
-Modules\PlayerBuffs.lua
 Modules\TooltipIds.lua
 Modules\Options.lua
 

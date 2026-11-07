@@ -2,11 +2,12 @@ local _, ns = ...
 local L = ns.L
 
 -- Adds the spell ID, item ID or NPC ID as a line to tooltips of spells, auras (buffs and debuffs),
--- items and NPCs, e.g. for the buff whitelist of Modules/PlayerBuffs.lua.
+-- items and NPCs.
 --
--- The hooks come from ns.Compat.HookTooltipIds() and only run when a tooltip is built, never per
--- frame. They cannot be removed again, so they are added when the first kind of ID is turned on
--- and skip the kinds that are off.
+-- The client builds tooltips from tooltip data (Blizzard_GameTooltip/Mainline/GameTooltip.lua,
+-- GameTooltipDataMixin) and calls the post calls of TooltipDataProcessor with it. They only run
+-- when a tooltip is built, never per frame. They cannot be removed again, so they are added when
+-- the first kind of ID is turned on and skip the kinds that are off.
 --
 -- Turned on per character and kind in the options (Modules/Options.lua) or with
 -- "/gryphonframes spellids on", "/gryphonframes itemids on" and "/gryphonframes npcids on"
@@ -34,8 +35,7 @@ end
 
 local hooked = false
 -- Kinds of ID already added to each tooltip since it was last cleared: some tooltips are built
--- twice (e.g. Classic recipes fire OnTooltipSetItem twice), and an aura hook may run next to
--- OnTooltipSetSpell.
+-- twice.
 local added = setmetatable({}, { __mode = "k" })
 local clearHooked = setmetatable({}, { __mode = "k" })
 
@@ -44,11 +44,8 @@ local function OnTooltipCleared(tooltip)
 end
 
 local function AddId(tooltip, kind, id)
-    if kind == "unit" then
-        kind = "npc"
-    end
     -- A secret ID or GUID cannot be compared or formatted; it is left out.
-    if not ns.charDb[KINDS[kind].setting] or ns.Compat.IsSecret(id) or tooltip:IsForbidden() then
+    if not ns.charDb[KINDS[kind].setting] or issecretvalue(id) or tooltip:IsForbidden() then
         return
     end
     if kind == "npc" then
@@ -71,11 +68,26 @@ local function AddId(tooltip, kind, id)
         VALUE_COLOR.r, VALUE_COLOR.g, VALUE_COLOR.b)
 end
 
-local function Hook()
-    if not hooked then
-        hooked = true
-        ns.Compat.HookTooltipIds(AddId)
+-- Post call for one tooltip data type: adds the field of the tooltip data as the kind of ID. The
+-- npc kind gets the GUID of the unit.
+local function CreatePostCall(kind, field)
+    return function(tooltip, tooltipData)
+        local value = tooltipData and tooltipData[field]
+        if value then
+            AddId(tooltip, kind, value)
+        end
     end
+end
+
+local function Hook()
+    if hooked then
+        return
+    end
+    hooked = true
+    TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Spell, CreatePostCall("spell", "id"))
+    TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.UnitAura, CreatePostCall("spell", "id"))
+    TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, CreatePostCall("item", "id"))
+    TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, CreatePostCall("npc", "guid"))
 end
 
 -- kind is "spell" or "item".

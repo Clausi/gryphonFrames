@@ -4,22 +4,18 @@ A World of Warcraft addon that improves the default Blizzard frames.
 
 ## Supported clients
 
-| Client      | Interface | Status    |
-| ----------- | --------- | --------- |
-| Forever     | 16001     | Supported |
-| Classic Era | 11509     | Supported |
-| Anniversary | 20506     | Supported |
+| Client  | Interface | Status    |
+| ------- | --------- | --------- |
+| Forever | 16001     | Supported |
 
-Retail and MoP Classic are not supported.
+Other clients are not supported.
 
 ## Installation
 
 Copy (or symlink) the `GryphonFrames` folder into the AddOns folder of the client:
 
 ```
-World of Warcraft\_forever_\Interface\AddOns\GryphonFrames        (Forever)
-World of Warcraft\_classic_era_\Interface\AddOns\GryphonFrames    (Classic Era)
-World of Warcraft\_anniversary_\Interface\AddOns\GryphonFrames    (Anniversary)
+World of Warcraft\_forever_\Interface\AddOns\GryphonFrames
 ```
 
 ## Structure
@@ -29,14 +25,11 @@ GryphonFrames.toc      Addon metadata and load order
 Locales/enUS.lua       Base locale (every key), fallback for all languages
 Locales/deDE.lua       German translation
 Core/Init.lua          Namespace, saved variable defaults, module, command and event registry
-Core/Compat.lua        Client differences (Forever, Classic Era, Anniversary)
 Core/Util.lua          Chat output, debug and memory helpers, defaults merging
-Core/ListEditor.lua    Dialog to edit a list, one entry per line (buff whitelist and blacklist)
 Core/Main.lua          Bootstrap: saved variables, module lifecycle, slash commands
 Modules/TargetCastBar.lua  Makes the target cast bar movable in Edit Mode
 Modules/NameplateComboPoints.lua  Shows combo points on the target's nameplate as well
-Modules/PlayerPowerTicks.lua  Shows energy and mana ticks and the five second rule on the player frame
-Modules/PlayerBuffs.lua  Shows the player's own buffs at the player frame, movable in Edit Mode
+Modules/PlayerPowerTicks.lua  Shows the five second rule on the player frame
 Modules/TooltipIds.lua  Shows spell, item and NPC IDs in tooltips
 Modules/Options.lua    Options page in the game settings ("/gryphonframes options")
 Libs/                  Embedded libraries, not in the repo (fetched by the packager)
@@ -89,12 +82,8 @@ Lint with [luacheck](https://github.com/lunarmodules/luacheck). Place `luacheck.
   default on
 - `/gryphonframes combo on|off` – also show combo points on the target's nameplate for the current
   character, default off (position, size and gap in the options)
-- `/gryphonframes energy on|off` – show energy ticks on the player frame for the current character,
-  default off (not on WoW Forever)
-- `/gryphonframes mana on|off` – show mana ticks and the five second rule on the player frame for
-  the current character, default off (on WoW Forever only the five second rule)
-- `/gryphonframes buffs on|off` – show your own buffs at the player frame for the current character,
-  default off, position, icon size and icons per row in Edit Mode (not on WoW Forever)
+- `/gryphonframes mana on|off` – show the five second rule on the player frame for the current
+  character, default off
 - `/gryphonframes spellids on|off` – show spell IDs in tooltips (spells, buffs, debuffs) for the
   current character, default off
 - `/gryphonframes itemids on|off` – show item IDs in tooltips for the current character, default

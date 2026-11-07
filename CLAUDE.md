@@ -9,17 +9,13 @@ file only adds what is specific to GryphonFrames.
 
 ## Target clients
 
-- **Forever** (16001, `forever` branch of wow-ui-source, Mainline UI), **Classic Era** (11509,
-  `classic_era`) and **Anniversary** (20506, `classic_anniversary`), all in one `.toc`
-  (`## Interface: 16001, 11509, 20506`). Other clients (Retail, MoP Classic) are not supported.
-  Forever differs from Retail in many places.
-- Every client difference goes through `ns.Compat` (`Core/Compat.lua`). Read the Blizzard source of
-  all three branches before hooking a frame: Classic Era and Anniversary use the Classic UI
-  (`Blizzard_UnitFrame/Classic/...`), Forever the Mainline UI.
-- All three clients have Blizzard's Edit Mode, so LibEditMode is used on all of them.
+- **Forever** only (16001, `forever` branch of wow-ui-source, Mainline UI). Other clients are not
+  supported, and Forever differs from Retail in many places.
+- A single client needs no `ns.Compat`: no client checks, and `issecretvalue` and `canaccesstable`
+  are called directly.
 - Features are usually one module per Blizzard frame.
-- `Core/Names.lua` does not exist yet. When a feature needs names, take over `Core/Names.lua` and
-  `Compat.HasRealmNames()` from GryphonMail.
+- `Core/Names.lua` does not exist yet. When a feature needs names, take over `Core/Names.lua` from
+  GryphonMail, without `Compat.HasRealmNames()`.
 
 ## Libraries
 
@@ -42,5 +38,5 @@ file only adds what is specific to GryphonFrames.
 
 ## Commit scopes
 
-`nameplate-combo-points`, `player-buffs`, `player-power-ticks`, `target-cast-bar`, `tooltip-ids`,
+`nameplate-combo-points`, `player-power-ticks`, `target-cast-bar`, `tooltip-ids`,
 `options`, `core`, `locales`, `toc`.

@@ -1,4 +1,4 @@
--- luacheck configuration for GryphonFrames (WoW Forever, Classic Era and Anniversary, Lua 5.1)
+-- luacheck configuration for GryphonFrames (WoW Forever, Lua 5.1)
 std = "lua51"
 max_line_length = 120
 exclude_files = { ".tools/", "Libs/" }
@@ -21,7 +21,6 @@ read_globals = {
     "floor",
     "strsplit",
     "strtrim",
-    "C_EventUtils",
     "canaccesstable",
     "issecretvalue",
     "hooksecurefunc",
@@ -33,13 +32,9 @@ read_globals = {
 
     -- API
     "C_AddOns",
-    "C_DurationUtil",
     "C_NamePlate",
     "C_Spell",
-    "C_StringUtil",
-    "C_Texture",
     "C_Timer",
-    "C_UnitAuras",
     "CreateFrame",
     "Enum",
     "GetAddOnMemoryUsage",
@@ -47,15 +42,12 @@ read_globals = {
     "GetLocale",
     "GetTime",
     "InCombatLockdown",
-    "UnitGUID",
-    "UnitIsUnit",
     "UnitPower",
     "UnitPowerMax",
     "UnitPowerType",
     "UpdateAddOnMemoryUsage",
 
     -- Global strings and colors
-    "CANCEL",
     "HIGHLIGHT_FONT_COLOR",
     "NORMAL_FONT_COLOR",
 
@@ -63,12 +55,9 @@ read_globals = {
     "TooltipDataProcessor",
 
     -- UI helpers
-    "CreateColor",
-    "CreateSettingsButtonInitializer",
     "CreateSettingsListSectionHeaderInitializer",
     "DropdownButtonMixin",
     "MinimalSliderWithSteppersMixin",
-    "SecondsToTimeAbbrev",
     "Settings",
     "SettingsPanel",
 
