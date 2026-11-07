@@ -13,11 +13,6 @@ ns.defaults = {
     targetCastBar = {
         layouts = {},
     },
-    -- Position, icon size and icons per row of the player buffs per Edit Mode layout. Filled by
-    -- Modules/PlayerBuffs.lua.
-    playerBuffs = {
-        layouts = {},
-    },
 }
 
 -- Per character (GryphonFramesCharDB, ns.charDb): data and settings only the logged-in character needs.
@@ -35,25 +30,11 @@ ns.charDefaults = {
     nameplateComboPointsGap = 2,
     -- Horizontal position in percent of the free space: -100 left, 0 centered, 100 right.
     nameplateComboPointsOffsetX = 0,
-    -- nameplateComboPointsStyle ("modern" or "classic") depends on the client, see Core/Compat.lua.
-    -- Energy and mana ticks on the power bar of the player frame (Modules/PlayerPowerTicks.lua).
-    -- Change with "/gryphonframes energy on|off" and "/gryphonframes mana on|off".
-    playerEnergyTicks = false,
-    -- Mana ticks include the five second rule after a mana spend.
+    -- "modern" like the modern unit frames or "classic" like the Classic ComboFrame.
+    nameplateComboPointsStyle = "modern",
+    -- Five second rule on the power bar of the player frame (Modules/PlayerPowerTicks.lua). Change
+    -- with "/gryphonframes mana on|off".
     playerManaTicks = false,
-    -- Buffs from the player at the player frame (Modules/PlayerBuffs.lua). Change with
-    -- "/gryphonframes buffs on|off".
-    playerBuffs = false,
-    -- Buffs with a longer full duration in seconds are hidden, 0 = no limit.
-    playerBuffsMaxDuration = 0,
-    -- Hides buffs without a duration (forms, auras, aspects).
-    playerBuffsHidePermanent = false,
-    -- Shows only the buffs on the whitelist.
-    playerBuffsWhitelistOnly = false,
-    -- Spell IDs (numbers) or aura names (strings): the whitelist is always shown, also above the
-    -- maximum duration, the blacklist never.
-    playerBuffsWhitelist = {},
-    playerBuffsBlacklist = {},
     -- Spell, item and NPC IDs in tooltips (Modules/TooltipIds.lua). Change with
     -- "/gryphonframes spellids|itemids|npcids on|off".
     tooltipSpellIds = false,

@@ -38,7 +38,6 @@ NameplateComboPoints.MIN_OFFSET_X, NameplateComboPoints.MAX_OFFSET_X = -100, 100
 NameplateComboPoints.STYLES = { "modern", "classic" }
 
 local COMBO_POINT_TEXTURE = "Interface\\ComboFrame\\ComboPoint"
-local CIRCLE_MASK = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
 
 local row
 -- Points per style, created on first use. A style change hides the points of the other style.
@@ -73,7 +72,7 @@ end
 
 -- Blizzard's modern combo point (RogueComboPointTemplate, Blizzard_UnitFrame/Mainline/
 -- RogueComboPoint.xml): BGInactive, BGActive with IconUncharged on top, and BGGlow.
-local function SetupModernAtlas(point)
+local function SetupModern(point)
     local socket = point:CreateTexture(nil, "BACKGROUND")
     socket:SetAtlas("uf-roguecp-bg-dis")
     socket:SetAllPoints()
@@ -89,38 +88,6 @@ local function SetupModernAtlas(point)
     point.Glow:SetAtlas("uf-roguecp-bg")
     point.Glow:SetPoint("TOPLEFT", -2, 2)
     point.Glow:SetPoint("BOTTOMRIGHT", 2, -2)
-    point.Glow:SetBlendMode("ADD")
-end
-
--- A circle of a plain color, inset from the frame's edges (negative: larger than the frame).
-local function CreateCircle(frame, layer, subLevel, inset, r, g, b, a)
-    local circle = frame:CreateTexture(nil, layer, nil, subLevel)
-    circle:SetPoint("TOPLEFT", inset, -inset)
-    circle:SetPoint("BOTTOMRIGHT", -inset, inset)
-    circle:SetColorTexture(r, g, b, a)
-    local mask = frame:CreateMaskTexture()
-    mask:SetTexture(CIRCLE_MASK, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-    mask:SetAllPoints(circle)
-    circle:AddMaskTexture(mask)
-    return circle
-end
-
--- The modern combo point drawn from plain shapes, for clients without Blizzard's modern art
--- (Classic Era, Anniversary): a red gem with a light from above in a bronze setting.
-local function SetupModernDrawn(point)
-    CreateCircle(point, "BACKGROUND", 0, 0, 0.66, 0.53, 0.33, 1)
-    CreateCircle(point, "BACKGROUND", 1, 1, 0.22, 0.16, 0.1, 1)
-    CreateCircle(point, "BACKGROUND", 2, 1.75, 0.07, 0.05, 0.05, 1)
-
-    local gem = CreateCircle(point.Active, "ARTWORK", 0, 2, 1, 1, 1, 1)
-    gem:SetGradient("VERTICAL", CreateColor(0.5, 0, 0, 1), CreateColor(1, 0.32, 0.18, 1))
-    local shine = CreateCircle(point.Active, "ARTWORK", 1, 3.5, 1, 1, 1, 0.45)
-    shine:ClearAllPoints()
-    shine:SetPoint("TOPLEFT", 3.5, -3)
-    shine:SetSize(POINT_SIZE * 0.3, POINT_SIZE * 0.3)
-    shine:SetBlendMode("ADD")
-
-    point.Glow = CreateCircle(point, "OVERLAY", 0, -3, 1, 0.35, 0.15, 1)
     point.Glow:SetBlendMode("ADD")
 end
 
@@ -162,10 +129,8 @@ local function CreatePoint(style)
     point.Active:SetAllPoints()
     if style == "classic" then
         SetupClassic(point)
-    elseif ns.Compat.HasModernComboPointArt() then
-        SetupModernAtlas(point)
     else
-        SetupModernDrawn(point)
+        SetupModern(point)
     end
     point.Active:SetAlpha(0)
     point.Glow:SetAlpha(0)
@@ -277,7 +242,7 @@ end
 local function GetHealthBarWidth(namePlate)
     local healthBar = GetHealthBar(namePlate)
     local width = healthBar and healthBar:GetWidth()
-    if not width or ns.Compat.IsSecret(width) or width <= 0 then
+    if not width or issecretvalue(width) or width <= 0 then
         return nil
     end
     return width
@@ -293,7 +258,7 @@ local function GetNameHeightAbove(namePlate)
     end
     local nameShown = name:IsShown()
     local height = name:GetHeight()
-    if ns.Compat.IsSecret(nameShown) or not nameShown or ns.Compat.IsSecret(height) then
+    if issecretvalue(nameShown) or not nameShown or issecretvalue(height) then
         return 0
     end
     return (NamePlateSetupOptions.healthBarToNameAboveSpacing or 0) + height
@@ -308,14 +273,14 @@ end
 local function IsCastBarShown(namePlate)
     local castBar = GetCastBar(namePlate)
     local castBarShown = castBar and castBar:IsShown()
-    return castBarShown and not ns.Compat.IsSecret(castBarShown) or false
+    return castBarShown and not issecretvalue(castBarShown) or false
 end
 
 -- Factor from the health bar's coordinates to the row's own coordinates (the row has its own
 -- scale on top of the nameplate's).
 local function GetScaleFactor(healthBar)
     local barScale, rowScale = healthBar:GetEffectiveScale(), row:GetEffectiveScale()
-    if ns.Compat.IsSecret(barScale) or ns.Compat.IsSecret(rowScale) then
+    if issecretvalue(barScale) or issecretvalue(rowScale) then
         return 1 / ns.charDb.nameplateComboPointsScale
     end
     return barScale / rowScale
@@ -353,7 +318,7 @@ local function AttachTo(namePlate, layout)
             -- moved by the distance between their centers to stay relative to the health bar.
             local barX = healthBar:GetCenter()
             local castBarX = castBar:GetCenter()
-            if barX and castBarX and not ns.Compat.IsSecret(barX) and not ns.Compat.IsSecret(castBarX) then
+            if barX and castBarX and not issecretvalue(barX) and not issecretvalue(castBarX) then
                 x = x + (barX - castBarX) * factor
             end
             row:SetPoint("TOP", castBar, "BOTTOM", x, -gap)
@@ -399,7 +364,7 @@ function Update()
     -- Forbidden nameplates (e.g. friendly ones in instances) are not returned to addon code.
     local namePlate = ns.charDb.nameplateComboPoints and C_NamePlate.GetNamePlateForUnit("target")
     local comboPoints = namePlate and GetComboPoints("player", "target") or 0
-    if ns.Compat.IsSecret(comboPoints) or comboPoints == 0 then
+    if issecretvalue(comboPoints) or comboPoints == 0 then
         suppressTransitions = false
         if shown.namePlate then
             wipe(shown)

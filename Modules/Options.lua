@@ -109,111 +109,21 @@ local function RegisterComboPoints(nameplates)
     Settings.CreateSlider(nameplates, offsetX, offsetOptions, L["OPTIONS_COMBO_OFFSET_X_TOOLTIP"])
 end
 
--- Energy and mana ticks on the player frame (Modules/PlayerPowerTicks.lua).
+-- Five second rule on the player frame (Modules/PlayerPowerTicks.lua).
 local function RegisterPowerTicks(unitFrames)
     local PlayerPowerTicks = ns.modules.PlayerPowerTicks
     local layout = SettingsPanel:GetLayout(unitFrames)
     layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(L["OPTIONS_PLAYER_FRAME_HEADER"]))
 
-    if PlayerPowerTicks.HAS_TICKS then
-        local energy = RegisterProxySetting(unitFrames, "ENERGY_TICKS", Settings.VarType.Boolean,
-            L["OPTIONS_ENERGY_TICKS"], ns.charDefaults.playerEnergyTicks,
-            function()
-                return PlayerPowerTicks:IsEnergyEnabled()
-            end,
-            function(value)
-                PlayerPowerTicks:SetEnergyEnabled(value)
-            end)
-        Settings.CreateCheckbox(unitFrames, energy, L["OPTIONS_ENERGY_TICKS_TOOLTIP"])
-    end
-
-    -- Without ticks (Forever), the same setting only stands for the five second rule.
-    local manaKey = PlayerPowerTicks.HAS_TICKS and "OPTIONS_MANA_TICKS" or "OPTIONS_MANA_RULE"
     local mana = RegisterProxySetting(unitFrames, "MANA_TICKS", Settings.VarType.Boolean,
-        L[manaKey], ns.charDefaults.playerManaTicks,
+        L["OPTIONS_MANA_RULE"], ns.charDefaults.playerManaTicks,
         function()
             return PlayerPowerTicks:IsManaEnabled()
         end,
         function(value)
             PlayerPowerTicks:SetManaEnabled(value)
         end)
-    Settings.CreateCheckbox(unitFrames, mana, L[manaKey .. "_TOOLTIP"])
-end
-
--- Own buffs at the player frame (Modules/PlayerBuffs.lua). Position and size are in Edit Mode.
-local function RegisterPlayerBuffs(unitFrames)
-    local PlayerBuffs = ns.modules.PlayerBuffs
-    local enabled = RegisterProxySetting(unitFrames, "PLAYER_BUFFS", Settings.VarType.Boolean,
-        L["OPTIONS_PLAYER_BUFFS"], ns.charDefaults.playerBuffs,
-        function()
-            return PlayerBuffs:IsEnabled()
-        end,
-        function(value)
-            PlayerBuffs:SetEnabled(value)
-        end)
-    Settings.CreateCheckbox(unitFrames, enabled, L["OPTIONS_PLAYER_BUFFS_TOOLTIP"])
-
-    local maxDuration = RegisterProxySetting(unitFrames, "PLAYER_BUFFS_MAX_DURATION", Settings.VarType.Number,
-        L["OPTIONS_PLAYER_BUFFS_MAX_DURATION"], ns.charDefaults.playerBuffsMaxDuration,
-        function()
-            return PlayerBuffs:GetMaxDuration()
-        end,
-        function(value)
-            PlayerBuffs:SetMaxDuration(value)
-        end)
-    local function GetMaxDurationOptions()
-        local container = Settings.CreateControlTextContainer()
-        for _, seconds in ipairs(PlayerBuffs.MAX_DURATIONS) do
-            local text
-            if seconds == 0 then
-                text = L["OPTIONS_PLAYER_BUFFS_MAX_DURATION_NONE"]
-            elseif seconds == 60 then
-                text = L["OPTIONS_PLAYER_BUFFS_MINUTE"]
-            elseif seconds < 60 then
-                text = format(L["OPTIONS_PLAYER_BUFFS_SECONDS"], seconds)
-            else
-                text = format(L["OPTIONS_PLAYER_BUFFS_MINUTES"], seconds / 60)
-            end
-            container:Add(seconds, text)
-        end
-        return container:GetData()
-    end
-    Settings.CreateDropdown(unitFrames, maxDuration, GetMaxDurationOptions,
-        L["OPTIONS_PLAYER_BUFFS_MAX_DURATION_TOOLTIP"])
-
-    local hidePermanent = RegisterProxySetting(unitFrames, "PLAYER_BUFFS_HIDE_PERMANENT", Settings.VarType.Boolean,
-        L["OPTIONS_PLAYER_BUFFS_HIDE_PERMANENT"], ns.charDefaults.playerBuffsHidePermanent,
-        function()
-            return PlayerBuffs:IsHidingPermanent()
-        end,
-        function(value)
-            PlayerBuffs:SetHidingPermanent(value)
-        end)
-    Settings.CreateCheckbox(unitFrames, hidePermanent, L["OPTIONS_PLAYER_BUFFS_HIDE_PERMANENT_TOOLTIP"])
-
-    local whitelistOnly = RegisterProxySetting(unitFrames, "PLAYER_BUFFS_WHITELIST_ONLY", Settings.VarType.Boolean,
-        L["OPTIONS_PLAYER_BUFFS_WHITELIST_ONLY"], ns.charDefaults.playerBuffsWhitelistOnly,
-        function()
-            return PlayerBuffs:IsWhitelistOnly()
-        end,
-        function(value)
-            PlayerBuffs:SetWhitelistOnly(value)
-        end)
-    Settings.CreateCheckbox(unitFrames, whitelistOnly, L["OPTIONS_PLAYER_BUFFS_WHITELIST_ONLY_TOOLTIP"])
-
-    -- The lists are edited in ns.ListEditor, one spell ID or aura name per line.
-    local layout = SettingsPanel:GetLayout(unitFrames)
-    -- No search tags (addSearchTags = false): tags added from addon code taint the initializer,
-    -- and the settings search carries that taint on to its results. On Forever, showing a Discord
-    -- row there then calls the protected C_Discord.IsUserOAuthed.
-    for _, kind in ipairs({ "whitelist", "blacklist" }) do
-        local key = "OPTIONS_PLAYER_BUFFS_" .. kind:upper()
-        layout:AddInitializer(CreateSettingsButtonInitializer(L[key], L["OPTIONS_PLAYER_BUFFS_EDIT"], function()
-            ns.ListEditor:Open(L[key], L[key .. "_DESC"], PlayerBuffs:GetList(kind), function(entries)
-                PlayerBuffs:SetList(kind, entries)
-            end)
-        end, L[key .. "_TOOLTIP"], false))
-    end
+    Settings.CreateCheckbox(unitFrames, mana, L["OPTIONS_MANA_RULE_TOOLTIP"])
 end
 
 -- Spell, item and NPC IDs in tooltips (Modules/TooltipIds.lua).
@@ -260,12 +170,7 @@ local function RegisterSettings()
     RegisterTooltipIds(tooltips)
 
     local unitFrames = Settings.RegisterVerticalLayoutSubcategory(category, L["OPTIONS_UNIT_FRAMES"])
-    -- The "Player Frame" section starts in RegisterPowerTicks().
     RegisterPowerTicks(unitFrames)
-    -- Turned off on Forever.
-    if ns.modules.PlayerBuffs then
-        RegisterPlayerBuffs(unitFrames)
-    end
 end
 
 function Options:OnInitialize()

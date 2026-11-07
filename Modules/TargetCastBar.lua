@@ -39,17 +39,16 @@ local function IsDefaultPosition(point, x, y)
         and math.abs(y - DEFAULT_POSITION.y) < 0.01
 end
 
--- Size of TargetSpellBarTemplate (Blizzard_UnitFrame/Mainline/TargetFrame.xml, the same in
--- Classic/TargetFrame.xml). The bar's own size cannot be used: Forever returns it as a secret
--- value once Blizzard has anchored the bar to the aura container (AddForbiddenAspects in
--- TargetSpellBarMixin:AdjustPosition()).
+-- Size of TargetSpellBarTemplate (Blizzard_UnitFrame/Mainline/TargetFrame.xml). The bar's own size
+-- cannot be used: the client returns it as a secret value once Blizzard has anchored the bar to
+-- the aura container (AddForbiddenAspects in TargetSpellBarMixin:AdjustPosition()).
 local BAR_WIDTH, BAR_HEIGHT = 150, 10
 
 -- Scale of the bar relative to UIParent. The bar has no own scale, so it follows the target
 -- frame (Edit Mode "Frame Size"). Falls back to 1 if the client hides the value.
 local function GetBarScale()
     local scale = TargetFrame:GetEffectiveScale()
-    if ns.Compat.IsSecret(scale) then
+    if issecretvalue(scale) then
         return 1
     end
     return scale / UIParent:GetEffectiveScale()
@@ -61,11 +60,33 @@ local function UpdateAnchorSize()
     anchor:SetSize(BAR_WIDTH * scale, BAR_HEIGHT * scale)
 end
 
+-- Offset of the bar's TOPLEFT from the target frame's BOTTOMLEFT, where Blizzard puts it while the
+-- target has no extra aura rows below the frame. Mirrors the non-aura branches of
+-- TargetSpellBarMixin:AdjustPosition(), so the values must follow Blizzard's code.
+local function GetBarOffset()
+    local x = TargetFrame.smallSize and 38 or 43
+    local y = TargetFrame.smallSize and 3 or 5
+    if TargetFrame.haveToT then
+        y = TargetFrame.smallSize and -48 or -46
+    end
+    return x, y
+end
+
+-- Hands the bar back to Blizzard's anchoring. AdjustPosition() is not called here: run from addon
+-- code it could taint the aura layout it reads. It clears the points itself and runs again on the
+-- next show of the bar. The shown state of the bar may be secret, like its size.
+local function ReleaseBar()
+    local shown = spellBar:IsShown()
+    if not issecretvalue(shown) and not shown then
+        spellBar:ClearAllPoints()
+    end
+end
+
 -- Places the anchor where Blizzard shows the bar below the target frame, so it can be picked up
 -- there in Edit Mode. The bar is not anchored at all before the target first casts, so its own
 -- position cannot be used.
 local function PlaceAnchorAtTargetFrame()
-    local x, y = ns.Compat.GetTargetSpellBarOffset(spellBar)
+    local x, y = GetBarOffset()
     local scale = GetBarScale()
     anchor:ClearAllPoints()
     anchor:SetPoint("TOPLEFT", TargetFrame, "BOTTOMLEFT", x * scale, y * scale)
@@ -92,7 +113,7 @@ local function ApplyLayout()
         ApplyBarPosition()
     else
         PlaceAnchorAtTargetFrame()
-        ns.Compat.ReleaseTargetSpellBar(spellBar)
+        ReleaseBar()
     end
 end
 
