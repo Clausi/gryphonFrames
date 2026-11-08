@@ -28,6 +28,7 @@ Modules\TargetCastBar.lua
 Modules\NameplateComboPoints.lua
 Modules\PlayerPowerTicks.lua
 Modules\TooltipIds.lua
+Modules\LootRolls.lua
 Modules\Options.lua
 
 # Bootstrap (must be loaded last)

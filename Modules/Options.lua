@@ -15,6 +15,48 @@ local function RegisterProxySetting(settingsCategory, variable, varType, name, d
         defaultValue, getValue, setValue)
 end
 
+-- Choices next to the roll frames and the results window (Modules/LootRolls.lua).
+local function RegisterLootRolls(lootRolls)
+    local LootRolls = ns.modules.LootRolls
+    local choices = RegisterProxySetting(lootRolls, "LOOT_ROLL_CHOICES", Settings.VarType.Boolean,
+        L["OPTIONS_LOOT_CHOICES"], ns.charDefaults.lootRollChoices,
+        function()
+            return LootRolls:AreChoicesEnabled()
+        end,
+        function(value)
+            LootRolls:SetChoicesEnabled(value)
+        end)
+    Settings.CreateCheckbox(lootRolls, choices, L["OPTIONS_LOOT_CHOICES_TOOLTIP"])
+
+    local results = RegisterProxySetting(lootRolls, "LOOT_ROLL_RESULTS", Settings.VarType.Boolean,
+        L["OPTIONS_LOOT_RESULTS"], ns.charDefaults.lootRollResults,
+        function()
+            return LootRolls:AreResultsEnabled()
+        end,
+        function(value)
+            LootRolls:SetResultsEnabled(value)
+        end)
+    Settings.CreateCheckbox(lootRolls, results, L["OPTIONS_LOOT_RESULTS_TOOLTIP"])
+
+    local autoClose = RegisterProxySetting(lootRolls, "LOOT_ROLL_AUTO_CLOSE", Settings.VarType.Number,
+        L["OPTIONS_LOOT_AUTO_CLOSE"], ns.charDefaults.lootRollResultsAutoClose,
+        function()
+            return LootRolls:GetAutoClose()
+        end,
+        function(value)
+            LootRolls:SetAutoClose(floor(value + 0.5))
+        end)
+    local autoCloseOptions = Settings.CreateSliderOptions(0, LootRolls.MAX_AUTO_CLOSE, LootRolls.AUTO_CLOSE_STEP)
+    autoCloseOptions:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(value)
+        local seconds = floor(value + 0.5)
+        if seconds == 0 then
+            return L["OPTIONS_LOOT_AUTO_CLOSE_NEVER"]
+        end
+        return format(L["OPTIONS_LOOT_AUTO_CLOSE_SECONDS"], seconds)
+    end)
+    Settings.CreateSlider(lootRolls, autoClose, autoCloseOptions, L["OPTIONS_LOOT_AUTO_CLOSE_TOOLTIP"])
+end
+
 -- Combo points on the target's nameplate (Modules/NameplateComboPoints.lua).
 local function RegisterComboPoints(nameplates)
     local NameplateComboPoints = ns.modules.NameplateComboPoints
@@ -160,9 +202,12 @@ local function RegisterSettings()
         end)
     Settings.CreateCheckbox(category, chatMessages, L["OPTIONS_CHAT_MESSAGES_TOOLTIP"])
 
-    -- Subcategories for all options of the nameplates, tooltips and unit frames; each feature is a
-    -- section in one of them. They are listed in the order they are registered: alphabetical by
-    -- their English names, in every language.
+    -- Subcategories for all options of the loot rolls, nameplates, tooltips and unit frames; each
+    -- feature is a section in one of them. They are listed in the order they are registered:
+    -- alphabetical by their English names, in every language.
+    local lootRolls = Settings.RegisterVerticalLayoutSubcategory(category, L["OPTIONS_LOOT_ROLLS"])
+    RegisterLootRolls(lootRolls)
+
     local nameplates = Settings.RegisterVerticalLayoutSubcategory(category, L["OPTIONS_NAMEPLATES"])
     RegisterComboPoints(nameplates)
 
