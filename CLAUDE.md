@@ -38,5 +38,5 @@ file only adds what is specific to GryphonFrames.
 
 ## Commit scopes
 
-`nameplate-combo-points`, `player-power-ticks`, `target-cast-bar`, `tooltip-ids`,
+`loot-rolls`, `nameplate-combo-points`, `player-power-ticks`, `target-cast-bar`, `tooltip-ids`,
 `options`, `core`, `locales`, `toc`.

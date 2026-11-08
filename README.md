@@ -31,6 +31,7 @@ Modules/TargetCastBar.lua  Makes the target cast bar movable in Edit Mode
 Modules/NameplateComboPoints.lua  Shows combo points on the target's nameplate as well
 Modules/PlayerPowerTicks.lua  Shows the five second rule on the player frame
 Modules/TooltipIds.lua  Shows spell, item and NPC IDs in tooltips
+Modules/LootRolls.lua  Shows the choices of the group at loot rolls and keeps the results in a window
 Modules/Options.lua    Options page in the game settings ("/gryphonframes options")
 Libs/                  Embedded libraries, not in the repo (fetched by the packager)
 ```
@@ -84,6 +85,11 @@ Lint with [luacheck](https://github.com/lunarmodules/luacheck). Place `luacheck.
   character, default off (position, size and gap in the options)
 - `/gryphonframes mana on|off` – show the five second rule on the player frame for the current
   character, default off
+- `/gryphonframes rolls on|off` – show who chose need, greed or pass next to the roll frames for
+  the current character, default on
+- `/gryphonframes rollresults on|off|test` – keep the results of loot rolls in a window for the
+  current character, default on; `test` shows a made-up result (drag to move, corner to size, closing
+  time in the options)
 - `/gryphonframes spellids on|off` – show spell IDs in tooltips (spells, buffs, debuffs) for the
   current character, default off
 - `/gryphonframes itemids on|off` – show item IDs in tooltips for the current character, default
@@ -96,9 +102,9 @@ Modules add subcommands with `ns:RegisterCommand(name, handler, helpLines)`.
 ## Options
 
 All options live in `Modules/Options.lua` (Esc > Options > AddOns > GryphonFrames), loaded after
-the other modules. General options are on the main page; everything on unit frames goes into the
-"Unit Frames" subcategory, everything on nameplates into "Nameplates" and everything on tooltips
-into "Tooltips", one section per feature.
+the other modules. General options are on the main page; everything on loot rolls goes into the
+"Loot Rolls" subcategory, everything on unit frames into "Unit Frames", everything on nameplates
+into "Nameplates" and everything on tooltips into "Tooltips", one section per feature.
 Proxy settings read and write `ns.db` and `ns.charDb` through the getters and setters of the
 modules (e.g. `NameplateComboPoints:SetScale`), so a change takes effect right away.
 Opening the page by command is blocked in combat.

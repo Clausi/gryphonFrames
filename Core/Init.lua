@@ -13,6 +13,10 @@ ns.defaults = {
     targetCastBar = {
         layouts = {},
     },
+    -- Position, size and look of the loot roll results per Edit Mode layout. Filled by Modules/LootRolls.lua.
+    lootRolls = {
+        layouts = {},
+    },
 }
 
 -- Per character (GryphonFramesCharDB, ns.charDb): data and settings only the logged-in character needs.
@@ -35,6 +39,13 @@ ns.charDefaults = {
     -- Five second rule on the power bar of the player frame (Modules/PlayerPowerTicks.lua). Change
     -- with "/gryphonframes mana on|off".
     playerManaTicks = false,
+    -- Who chose need, greed or pass, next to the roll frames (Modules/LootRolls.lua). Change with
+    -- "/gryphonframes rolls on|off".
+    lootRollChoices = true,
+    -- Window with the results of finished rolls. Change with "/gryphonframes rollresults on|off".
+    lootRollResults = true,
+    -- Seconds until the window closes by itself, 0 = stays open.
+    lootRollResultsAutoClose = 0,
     -- Spell, item and NPC IDs in tooltips (Modules/TooltipIds.lua). Change with
     -- "/gryphonframes spellids|itemids|npcids on|off".
     tooltipSpellIds = false,
