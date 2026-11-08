@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-08
+
+First release, for WoW Forever.
+
 ### Added
 
 - Addon skeleton: saved variables, module system and the slash commands
@@ -27,9 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Loot rolls: a panel next to each roll frame shows who chose need, greed or pass
   (`/gryphonframes rolls on|off`), and a small scrolling window keeps finished rolls grouped by item
   (`/gryphonframes rollresults on|off`), both per character and on by default. The window can
-  be moved and sized with the mouse, also in combat, or in Edit Mode, and can close by itself after a set time.
-  Edit Mode also sets padding, opacity, background, text size, item icons and class colors, per
-  layout, and shows a sample while the window is empty.
+  be moved and sized with the mouse, also in combat, or in Edit Mode, and can close by itself
+  after a set time. Edit Mode also sets padding, opacity, background, text size, item icons and
+  class colors, per layout, and shows a sample while the window is empty.
 - Addon options in Options > AddOns > GryphonFrames, or with `/gryphonframes options`. Nameplate
   options are in the subcategory "Nameplates", tooltip options in "Tooltips", unit frame options
   in "Unit Frames", loot roll options in "Loot Rolls".
