@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The loot roll results window already shows a roll after your own choice, with the players still
+  to choose, and updates it until the result is in. It does not close by itself while a roll runs.
+
 ## [0.1.0] - 2026-11-08
 
 First release, for WoW Forever.
