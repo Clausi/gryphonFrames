@@ -56,6 +56,8 @@ read_globals = {
 
     -- Global strings and colors
     "LOOT_HISTORY_ALL_PASSED",
+    "LOOT_HISTORY_PLAYER_DELIMITER",
+    "LOOT_HISTORY_WAITING_ON",
     "RAID_CLASS_COLORS",
     "UNKNOWN",
     "HIGHLIGHT_FONT_COLOR",

@@ -5,8 +5,10 @@ local L = ns.L
 -- - A panel next to each of Blizzard's roll frames lists who chose need, greed or pass
 --   (ns.charDb.lootRollChoices, "/gryphonframes rolls off").
 -- - A small scrolling window keeps the finished rolls, grouped by item, newest first
---   (ns.charDb.lootRollResults, "/gryphonframes rollresults off"). It can close by itself after
---   ns.charDb.lootRollResultsAutoClose seconds, 0 keeps it open.
+--   (ns.charDb.lootRollResults, "/gryphonframes rollresults off"). A roll already shows there once
+--   the player made an own choice, with the players still to choose, and becomes its result when it
+--   ends. The window can close by itself ns.charDb.lootRollResultsAutoClose seconds after the last
+--   result while no roll runs, 0 keeps it open.
 --
 -- Position, size and look of the window are saved per Edit Mode layout in
 -- ns.db.lootRolls.layouts[layoutName], the settings follow those of the window of GryphonThreat.
@@ -92,7 +94,8 @@ local window, scrollFrame, content
 local isEditing = false
 -- Frames of the item groups in the window, reused from top to bottom.
 local groups = {}
--- Drop infos of the results in the window, oldest first.
+-- Entries of the window, oldest first: { key = drop key, dropInfo = drop info, running = true while
+-- the roll runs }. The sample has no key.
 local results = {}
 local closeTimer
 -- Running rolls: drop info by drop key. A drop in the history only becomes a result if it was seen
@@ -120,7 +123,29 @@ local function GetRollText(rollInfo)
     return rollInfo.roll and format("%s %d", icon, rollInfo.roll) or icon
 end
 
--- Lists all players who made a choice, in Blizzard's order.
+local function IsFinished(dropInfo)
+    return dropInfo.winner or dropInfo.allPassed
+end
+
+-- "Waiting on:" with the players who did not choose yet, as in Blizzard's loot history; nil once
+-- the roll ended or everybody chose.
+local function GetWaitingText(dropInfo, plainNames)
+    if IsFinished(dropInfo) then
+        return nil
+    end
+    local names = {}
+    for _, rollInfo in ipairs(dropInfo.rollInfos) do
+        if rollInfo.state == RollState.NoRoll then
+            names[#names + 1] = plainNames and rollInfo.playerName or GetColoredName(rollInfo)
+        end
+    end
+    if #names == 0 then
+        return nil
+    end
+    return LOOT_HISTORY_WAITING_ON .. table.concat(names, LOOT_HISTORY_PLAYER_DELIMITER)
+end
+
+-- Lists all players who made a choice, in Blizzard's order, and those still to choose.
 local function ShowRollsTooltip(owner, dropInfo)
     GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
     GameTooltip:AddLine(dropInfo.itemHyperlink)
@@ -131,6 +156,10 @@ local function ShowRollsTooltip(owner, dropInfo)
         if rollInfo.state ~= RollState.NoRoll then
             GameTooltip:AddDoubleLine(GetColoredName(rollInfo), GetRollText(rollInfo), 1, 1, 1, 1, 1, 1)
         end
+    end
+    local waiting = GetWaitingText(dropInfo)
+    if waiting then
+        GameTooltip:AddLine(waiting, 1, 1, 1, true)
     end
     GameTooltip:Show()
 end
@@ -314,7 +343,8 @@ local function SetLine(group, index, y, scale, name, roll)
 end
 
 -- Fills the group with the item and one line per roll, the winner marked. Passes share one line,
--- which ends in "..." when it is too long. Returns the height of the group.
+-- and so do the players still to choose of a running roll; such a line ends in "..." when it is
+-- too long. Returns the height of the group.
 local function UpdateGroup(group, dropInfo, layout)
     group.dropInfo = dropInfo
     local scale = layout.textSize / 100
@@ -352,6 +382,10 @@ local function UpdateGroup(group, dropInfo, layout)
         and GetChoiceText(dropInfo, PASS_CHOICE, not layout.classColors)
     if passes then
         AddLine(passes, "")
+    end
+    local waiting = GetWaitingText(dropInfo, not layout.classColors)
+    if waiting then
+        AddLine(waiting, "")
     end
     for i = count + 1, #group.lines do
         group.lines[i].Name:Hide()
@@ -426,7 +460,7 @@ end
 local function RefreshWindow()
     local shownResults = results
     if #results == 0 and isEditing and ns.charDb.lootRollResults then
-        shownResults = { CreateSampleDrop() }
+        shownResults = { { dropInfo = CreateSampleDrop() } }
     end
     if #shownResults == 0 then
         window:Hide()
@@ -439,7 +473,7 @@ local function RefreshWindow()
         index = index + 1
         local group = groups[index] or CreateGroup()
         groups[index] = group
-        local groupHeight = UpdateGroup(group, shownResults[i], layout)
+        local groupHeight = UpdateGroup(group, shownResults[i].dropInfo, layout)
         group:ClearAllPoints()
         group:SetPoint("TOPLEFT", 0, -height)
         group:SetPoint("TOPRIGHT", 0, -height)
@@ -553,23 +587,71 @@ local function CreateWindow()
     resize:SetScript("OnMouseUp", OnResizeStop)
 end
 
--- A new result starts the time again.
-local function AddResult(dropInfo)
+local function FindEntry(key)
+    for _, entry in ipairs(results) do
+        if key and entry.key == key then
+            return entry
+        end
+    end
+    return nil
+end
+
+local function IsAnyRollRunning()
+    for _, entry in ipairs(results) do
+        if entry.running then
+            return true
+        end
+    end
+    return false
+end
+
+-- While a roll runs, the window stays open. A new result starts the time again.
+local function UpdateCloseTimer(restart)
+    if IsAnyRollRunning() then
+        CancelCloseTimer()
+        return
+    end
+    if not restart and closeTimer then
+        return
+    end
+    CancelCloseTimer()
+    local seconds = ns.charDb.lootRollResultsAutoClose
+    if seconds > 0 and #results > 0 then
+        closeTimer = C_Timer.NewTimer(seconds, CloseWindow)
+    end
+end
+
+-- Adds the drop to the window, or updates its entry there. key is nil for the sample.
+local function ShowDrop(key, dropInfo)
     if not ns.charDb.lootRollResults then
         return
     end
-    results[#results + 1] = dropInfo
-    if #results > MAX_RESULTS then
-        table.remove(results, 1)
+    local finished = IsFinished(dropInfo) and true or false
+    local entry = FindEntry(key)
+    if entry then
+        entry.dropInfo, entry.running = dropInfo, not finished
+    else
+        results[#results + 1] = { key = key, dropInfo = dropInfo, running = not finished }
+        if #results > MAX_RESULTS then
+            table.remove(results, 1)
+        end
     end
     RefreshWindow()
-    -- The newest result is at the top.
-    scrollFrame:SetVerticalScroll(0)
-    CancelCloseTimer()
-    local seconds = ns.charDb.lootRollResultsAutoClose
-    if seconds > 0 then
-        closeTimer = C_Timer.NewTimer(seconds, CloseWindow)
+    if not entry then
+        -- The newest entry is at the top.
+        scrollFrame:SetVerticalScroll(0)
     end
+    UpdateCloseTimer(finished)
+end
+
+-- True once the player chose need, greed or pass for the drop.
+local function HasOwnChoice(dropInfo)
+    for _, rollInfo in ipairs(dropInfo.rollInfos) do
+        if rollInfo.isSelf then
+            return rollInfo.state ~= RollState.NoRoll
+        end
+    end
+    return false
 end
 
 local function ForgetDrop(key)
@@ -583,11 +665,14 @@ end
 
 local function OnDropChanged(encounterID, dropInfo)
     local key = GetDropKey(encounterID, dropInfo.lootListKey)
-    if not (dropInfo.winner or dropInfo.allPassed) then
+    if not IsFinished(dropInfo) then
         runningDrops[key] = dropInfo
+        if HasOwnChoice(dropInfo) then
+            ShowDrop(key, dropInfo)
+        end
     elseif runningDrops[key] then
         ForgetDrop(key)
-        AddResult(dropInfo)
+        ShowDrop(key, dropInfo)
     end
 end
 
@@ -790,7 +875,7 @@ end, { L["HELP_LOOT_ROLLS"] })
 ns:RegisterCommand("rollresults", function(args)
     local value = args:lower()
     if value == "test" and LootRolls:AreResultsEnabled() then
-        AddResult(CreateSampleDrop())
+        ShowDrop(nil, CreateSampleDrop())
         return
     elseif value == "on" then
         LootRolls:SetResultsEnabled(true)
@@ -822,5 +907,13 @@ function LootRolls:OnEnable()
     ns:RegisterEvent("LOOT_HISTORY_CLEAR_HISTORY", function()
         wipe(runningDrops)
         wipe(rollDropKeys)
+        -- Their result will not come anymore.
+        for i = #results, 1, -1 do
+            if results[i].running then
+                table.remove(results, i)
+            end
+        end
+        RefreshWindow()
+        UpdateCloseTimer(false)
     end)
 end
