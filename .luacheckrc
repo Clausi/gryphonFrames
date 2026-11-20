@@ -32,34 +32,22 @@ read_globals = {
 
     -- API
     "C_AddOns",
-    "C_LootHistory",
     "C_NamePlate",
     "C_Spell",
-    "C_Timer",
     "CreateFrame",
     "Enum",
     "GetAddOnMemoryUsage",
     "GetComboPoints",
     "GetLocale",
-    "GetLootRollItemLink",
     "GetTime",
-    "HandleModifiedItemClick",
     "InCombatLockdown",
-    "IsModifiedClick",
     "Item",
-    "UnitClass",
-    "UnitName",
     "UnitPower",
     "UnitPowerMax",
     "UnitPowerType",
     "UpdateAddOnMemoryUsage",
 
     -- Global strings and colors
-    "LOOT_HISTORY_ALL_PASSED",
-    "LOOT_HISTORY_PLAYER_DELIMITER",
-    "LOOT_HISTORY_WAITING_ON",
-    "RAID_CLASS_COLORS",
-    "UNKNOWN",
     "HIGHLIGHT_FONT_COLOR",
     "NORMAL_FONT_COLOR",
 
@@ -67,7 +55,6 @@ read_globals = {
     "TooltipDataProcessor",
 
     -- UI helpers
-    "CreateAtlasMarkup",
     "CreateSettingsListSectionHeaderInitializer",
     "DropdownButtonMixin",
     "MinimalSliderWithSteppersMixin",

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- The loot roll features (choices of the group next to the roll frames, results window and the
+  commands `/gryphonframes rolls` and `/gryphonframes rollresults`) moved to the new addon
+  GryphonLoot. Their settings are not taken over.
+
 ## [0.1.1] - 2026-11-15
 
 ### Changed
