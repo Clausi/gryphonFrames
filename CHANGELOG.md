@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-21
+
 ### Removed
 
 - The loot roll features (choices of the group next to the roll frames, results window and the
