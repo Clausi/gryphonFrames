@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-23
+
 ### Added
 
 - Item level in tooltips: equippable items can show their item level, including upgrades
