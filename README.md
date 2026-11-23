@@ -28,7 +28,6 @@ Core/Init.lua          Namespace, saved variable defaults, module, command and e
 Core/Util.lua          Chat output, debug and memory helpers, defaults merging
 Core/Main.lua          Bootstrap: saved variables, module lifecycle, slash commands
 Modules/TargetCastBar.lua  Makes the target cast bar movable in Edit Mode
-Modules/NameplateComboPoints.lua  Shows combo points on the target's nameplate as well
 Modules/PlayerPowerTicks.lua  Shows the five second rule on the player frame
 Modules/TooltipIds.lua  Shows spell, item and NPC IDs in tooltips
 Modules/Options.lua    Options page in the game settings ("/gryphonframes options")
@@ -80,8 +79,6 @@ Lint with [luacheck](https://github.com/lunarmodules/luacheck). Place `luacheck.
 - `/gryphonframes version` – show version
 - `/gryphonframes chat on|off` – automatic chat messages (login, hints) of the current character,
   default on
-- `/gryphonframes combo on|off` – also show combo points on the target's nameplate for the current
-  character, default off (position, size and gap in the options)
 - `/gryphonframes mana on|off` – show the five second rule on the player frame for the current
   character, default off
 - `/gryphonframes spellids on|off` – show spell IDs in tooltips (spells, buffs, debuffs) for the
@@ -97,10 +94,9 @@ Modules add subcommands with `ns:RegisterCommand(name, handler, helpLines)`.
 
 All options live in `Modules/Options.lua` (Esc > Options > AddOns > GryphonFrames), loaded after
 the other modules. General options are on the main page; everything on unit frames goes into the
-"Unit Frames" subcategory, everything on nameplates into "Nameplates" and everything on tooltips
-into "Tooltips", one section per feature.
+"Unit Frames" subcategory and everything on tooltips into "Tooltips", one section per feature.
 Proxy settings read and write `ns.db` and `ns.charDb` through the getters and setters of the
-modules (e.g. `NameplateComboPoints:SetScale`), so a change takes effect right away.
+modules (e.g. `PlayerPowerTicks:SetManaEnabled`), so a change takes effect right away.
 Opening the page by command is blocked in combat.
 
 ## License

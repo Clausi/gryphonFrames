@@ -25,7 +25,6 @@ Core\Util.lua
 
 # Modules
 Modules\TargetCastBar.lua
-Modules\NameplateComboPoints.lua
 Modules\PlayerPowerTicks.lua
 Modules\TooltipIds.lua
 Modules\Options.lua

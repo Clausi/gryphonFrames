@@ -11,13 +11,6 @@ GryphonFrames improves Blizzard's own frames instead of replacing them. Everythi
 - Saved separately for each Edit Mode layout
 - **Lock to Target Frame** or **Reset Position** puts it back below the target frame
 
-### Combo points on the nameplate
-- Rogues and cat druids also see their combo points on the target's nameplate
-- The combo points at the target frame stay where they are
-- Modern style like the modern unit frames, or classic style
-- Above the name or below the nameplate, with adjustable size, gap and left/right position
-- Turn it on in the addon options or with `/gryphonframes combo on`, per character
-
 ### Five second rule
 - After a spell that costs mana, a red line runs from right to left across the mana bar for 5
   seconds: the time without mana regeneration
@@ -32,15 +25,13 @@ GryphonFrames improves Blizzard's own frames instead of replacing them. Everythi
 ## Options
 
 Options > AddOns > GryphonFrames, or `/gryphonframes options`. Unit frame options are under
-GryphonFrames > Unit Frames, nameplate options under GryphonFrames > Nameplates, tooltip options
-under GryphonFrames > Tooltips.
+GryphonFrames > Unit Frames, tooltip options under GryphonFrames > Tooltips.
 
 ## Slash commands
 
 - `/gryphonframes` – help
 - `/gryphonframes options` – open the addon options
 - `/gryphonframes chat on|off` – automatic chat messages
-- `/gryphonframes combo on|off` – combo points on the target's nameplate
 - `/gryphonframes mana on|off` – five second rule on the player frame
 - `/gryphonframes spellids on|off` – spell IDs in tooltips
 - `/gryphonframes itemids on|off` – item IDs in tooltips
