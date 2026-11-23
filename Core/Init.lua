@@ -22,10 +22,11 @@ ns.charDefaults = {
     -- Five second rule on the power bar of the player frame (Modules/PlayerPowerTicks.lua). Change
     -- with "/gryphonframes mana on|off".
     playerManaTicks = false,
-    -- Spell, item and NPC IDs in tooltips (Modules/TooltipIds.lua). Change with
-    -- "/gryphonframes spellids|itemids|npcids on|off".
+    -- Spell IDs, item IDs, item levels and NPC IDs in tooltips (Modules/TooltipIds.lua). Change
+    -- with "/gryphonframes spellids|itemids|itemlevel|npcids on|off".
     tooltipSpellIds = false,
     tooltipItemIds = false,
+    tooltipItemLevel = false,
     tooltipNpcIds = false,
 }
 

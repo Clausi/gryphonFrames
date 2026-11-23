@@ -21,6 +21,7 @@ GryphonFrames improves Blizzard's own frames instead of replacing them. Everythi
 - Spell IDs, item IDs and NPC IDs are turned on separately, in the addon options or with
   `/gryphonframes spellids on`, `/gryphonframes itemids on` and `/gryphonframes npcids on`, per
   character
+- Equippable items can also show their item level (`/gryphonframes itemlevel on`, per character)
 
 ## Options
 
@@ -35,4 +36,5 @@ GryphonFrames > Unit Frames, tooltip options under GryphonFrames > Tooltips.
 - `/gryphonframes mana on|off` – five second rule on the player frame
 - `/gryphonframes spellids on|off` – spell IDs in tooltips
 - `/gryphonframes itemids on|off` – item IDs in tooltips
+- `/gryphonframes itemlevel on|off` – item level in tooltips
 - `/gryphonframes npcids on|off` – NPC IDs in tooltips

@@ -29,7 +29,7 @@ Core/Util.lua          Chat output, debug and memory helpers, defaults merging
 Core/Main.lua          Bootstrap: saved variables, module lifecycle, slash commands
 Modules/TargetCastBar.lua  Makes the target cast bar movable in Edit Mode
 Modules/PlayerPowerTicks.lua  Shows the five second rule on the player frame
-Modules/TooltipIds.lua  Shows spell, item and NPC IDs in tooltips
+Modules/TooltipIds.lua  Shows spell, item and NPC IDs and item levels in tooltips
 Modules/Options.lua    Options page in the game settings ("/gryphonframes options")
 Libs/                  Embedded libraries, not in the repo (fetched by the packager)
 ```
@@ -85,6 +85,8 @@ Lint with [luacheck](https://github.com/lunarmodules/luacheck). Place `luacheck.
   current character, default off
 - `/gryphonframes itemids on|off` – show item IDs in tooltips for the current character, default
   off
+- `/gryphonframes itemlevel on|off` – show the item level of equippable items in tooltips for the
+  current character, default off
 - `/gryphonframes npcids on|off` – show NPC IDs in tooltips for the current character, default off
 - `/gryphonframes debug` – toggle debug output (after a `/reload`, also the memory each module keeps)
 

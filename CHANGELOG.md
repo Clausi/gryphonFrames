@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Item level in tooltips: equippable items can show their item level, including upgrades
+  (`/gryphonframes itemlevel on|off` or Options > AddOns > GryphonFrames > Tooltips, per
+  character, off by default).
+
 ## [0.3.0] - 2026-11-23
 
 ### Removed

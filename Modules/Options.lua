@@ -32,17 +32,18 @@ local function RegisterPowerTicks(unitFrames)
     Settings.CreateCheckbox(unitFrames, mana, L["OPTIONS_MANA_RULE_TOOLTIP"])
 end
 
--- Spell, item and NPC IDs in tooltips (Modules/TooltipIds.lua).
+-- Spell IDs, item IDs, item levels and NPC IDs in tooltips (Modules/TooltipIds.lua).
 local function RegisterTooltipIds(tooltips)
     local TooltipIds = ns.modules.TooltipIds
     local kinds = {
-        { kind = "spell", default = ns.charDefaults.tooltipSpellIds },
-        { kind = "item", default = ns.charDefaults.tooltipItemIds },
-        { kind = "npc", default = ns.charDefaults.tooltipNpcIds },
+        { kind = "spell", key = "SPELL_IDS", default = ns.charDefaults.tooltipSpellIds },
+        { kind = "item", key = "ITEM_IDS", default = ns.charDefaults.tooltipItemIds },
+        { kind = "itemLevel", key = "ITEM_LEVEL", default = ns.charDefaults.tooltipItemLevel },
+        { kind = "npc", key = "NPC_IDS", default = ns.charDefaults.tooltipNpcIds },
     }
     for _, entry in ipairs(kinds) do
         local kind = entry.kind
-        local key = kind:upper() .. "_IDS"
+        local key = entry.key
         local enabled = RegisterProxySetting(tooltips, "TOOLTIP_" .. key, Settings.VarType.Boolean,
             L["OPTIONS_TOOLTIP_" .. key], entry.default,
             function()
