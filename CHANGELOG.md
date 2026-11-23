@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   'GryphonFrames')" errors on all nameplates after the nameplate preview in the options showed its
   cast bar.
 
+### Fixed
+
+- The target cast bar no longer hooks the bar's OnShow script, which could carry taint into
+  Blizzard's cast bar code.
+
 ## [0.2.0] - 2026-11-21
 
 ### Removed
