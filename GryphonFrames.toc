@@ -4,7 +4,7 @@
 ## Notes-deDE: Verbessert die Standard-Fenster von Blizzard.
 ## Category: User Interface
 ## Author: cklausl
-## Version: 0.2.0
+## Version: 0.3.0
 ## SavedVariables: GryphonFramesDB
 ## SavedVariablesPerCharacter: GryphonFramesCharDB
 ## IconTexture: Interface\Icons\Ability_Mount_Gryphon_01
