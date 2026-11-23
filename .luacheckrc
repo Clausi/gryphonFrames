@@ -18,7 +18,6 @@ globals = {
 read_globals = {
     -- WoW Lua extensions
     "format",
-    "floor",
     "strsplit",
     "strtrim",
     "canaccesstable",
@@ -32,18 +31,15 @@ read_globals = {
 
     -- API
     "C_AddOns",
-    "C_NamePlate",
     "C_Spell",
     "CreateFrame",
     "Enum",
     "GetAddOnMemoryUsage",
-    "GetComboPoints",
     "GetLocale",
     "GetTime",
     "InCombatLockdown",
     "Item",
     "UnitPower",
-    "UnitPowerMax",
     "UnitPowerType",
     "UpdateAddOnMemoryUsage",
 
@@ -57,18 +53,12 @@ read_globals = {
     -- UI helpers
     "CreateSettingsListSectionHeaderInitializer",
     "DropdownButtonMixin",
-    "MinimalSliderWithSteppersMixin",
     "Settings",
     "SettingsPanel",
-
-    -- Nameplate layout (read only, see NameplateComboPoints.lua)
-    "NamePlateConstants",
-    "NamePlateSetupOptions",
 
     -- Frames
     "DEFAULT_CHAT_FRAME",
     "GameTooltip",
-    "NamePlateDriverFrame",
     -- Returns the power bar of the player frame on all clients (see PlayerPowerTicks.lua).
     "PlayerFrame_GetManaBar",
     "TargetFrame",

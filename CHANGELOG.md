@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- The combo points on the target's nameplate, with their options (GryphonFrames > Nameplates) and
+  the command `/gryphonframes combo`. They are no longer needed, and their hooks on the nameplate
+  cast bars caused "attempt to compare a secret number value (execution tainted by
+  'GryphonFrames')" errors on all nameplates after the nameplate preview in the options showed its
+  cast bar.
+
 ## [0.2.0] - 2026-11-21
 
 ### Removed

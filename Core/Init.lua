@@ -19,19 +19,6 @@ ns.defaults = {
 ns.charDefaults = {
     -- Automatic chat messages (login, hints). Change with "/gryphonframes chat on|off".
     chatMessages = true,
-    -- Combo points on the target's nameplate (Modules/NameplateComboPoints.lua). Change with
-    -- "/gryphonframes combo on|off".
-    nameplateComboPoints = false,
-    -- Size of the combo points on the nameplate (scale, 1 = Blizzard's combo point size).
-    nameplateComboPointsScale = 1,
-    -- "above" the name or "below" the nameplate.
-    nameplateComboPointsPosition = "above",
-    -- Gap in pixels to the name or the cast bar area.
-    nameplateComboPointsGap = 2,
-    -- Horizontal position in percent of the free space: -100 left, 0 centered, 100 right.
-    nameplateComboPointsOffsetX = 0,
-    -- "modern" like the modern unit frames or "classic" like the Classic ComboFrame.
-    nameplateComboPointsStyle = "modern",
     -- Five second rule on the power bar of the player frame (Modules/PlayerPowerTicks.lua). Change
     -- with "/gryphonframes mana on|off".
     playerManaTicks = false,
