@@ -108,12 +108,27 @@ https://github.com/Clausi/gryphonMail). Never use `Ambiguate`.
 
 - **Forever:** names are "First Surname" (separator from
   `Constants.CharacterNameSeparatorConsts.CHARACTERNAME_SURNAME_SEPARATOR`, a space) and carry no
-  realm suffix. `UnitName(unit)` returns first name and **surname**, not name and realm. Each
-  ruleset (PvE, PvP, RP, RP PvP) is a mega server made up of many realms, so characters of one
-  ruleset can be on different realms: `GetRealmName()` = "CAMWOW EU4 Realm 3 PvE". Never compare
-  realm names to decide whether two characters share a ruleset. No in-game API returns the ruleset,
-  read it from the realm name (`GetRulesetName` in GryphonMail's `Modules/Characters.lua`). A full
+  realm suffix. `UnitName(unit)` returns first name and **surname**, not name and realm. A full
   name is unique across rulesets.
+- **Forever rulesets:** each ruleset (PvE, PvP, RP, RP PvP, Hardcore) is a mega server made up of
+  many servers ("CAMWOW EU4 Realm 3 PvE" and "CAMWOW EU4 Realm 7 PvE" are one ruleset). Trade and
+  mail only work within one ruleset and faction. Never compare realm names, realm IDs or the server
+  ID of a GUID ("Player-6937-..."): they name one server, not the ruleset.
+  - Since build 71037 `GetRealmName()` and `GetNormalizedRealmName()` return `""` and
+    `GetRealmID()` 0. The ruleset of the logged-in character comes from its game rules:
+    `C_GameRules.IsGameRuleActive(Enum.GameRule.PvPRuleset / RPRuleset / HardcoreRuleset)` (both PvP
+    and RP = RP PvP, none = PvE), see `Compat.GetRuleset()` in GryphonMail. Store it per character;
+    a realm name stored before 71037 still names the ruleset (text after "Realm <number>",
+    `GetRulesetName` in GryphonMail's `Modules/Characters.lua`). Never overwrite a stored realm with
+    `""`.
+  - Friends are Battle.net friends: `C_FriendList.IsLegacyFriendSystemEnabled()` is false and
+    `C_FriendList.GetNumFriends()` 0. A character added by name is a Battle.net friend of
+    `friendLevel` `Enum.BattleNetFriendLevel.Title`; while offline its name comes from
+    `C_BattleNet.GetDefaultTitleWhisperTarget(bnetAccountID)`. Online characters are in
+    `C_BattleNet.GetFriendGameAccountInfo` (`characterName` = "First Surname", `wowProjectID`,
+    `isInCurrentRegion`, `factionName`). Their `realmName`, `realmDisplayName` and `realmID` are nil
+    (older builds gave the realm without spaces, "CAMWOWEU4Realm7PvE"), so a friend's ruleset is
+    unknown: check only the faction, as Blizzard's friends frame does.
 - **Classic Era, Anniversary, MoP Classic, Retail:** names are "Name-Realm" with the realm from
   `GetNormalizedRealmName()` (no spaces). Chat events usually include the sender's realm; other APIs
   leave it out for the own realm. `Names.Normalize` fills in the own realm for comparing;
