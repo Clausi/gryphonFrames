@@ -31,6 +31,7 @@ read_globals = {
 
     -- API
     "C_AddOns",
+    "C_Item",
     "C_Spell",
     "CreateFrame",
     "Enum",
