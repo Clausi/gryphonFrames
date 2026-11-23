@@ -201,7 +201,9 @@ function TargetCastBar:OnEnable()
 
     RegisterLayoutCallbacks()
 
-    -- AdjustPosition() is also the OnShow script of the bar (TargetSpellBarTemplate).
+    -- AdjustPosition() is also the OnShow script of the bar (TargetSpellBarTemplate:
+    -- <OnShow method="AdjustPosition"/>, looked up on the bar at call time), so this secure hook
+    -- covers OnShow as well. No HookScript: an insecure script hook runs inside Blizzard's cast bar
+    -- code and taints the rest of that execution, including the bar's cast fields.
     hooksecurefunc(spellBar, "AdjustPosition", ApplyBarPosition)
-    spellBar:HookScript("OnShow", ApplyBarPosition)
 end
